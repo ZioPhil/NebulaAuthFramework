@@ -56,7 +56,6 @@ const checkJwt = jwt({
 const checkPermissions = jwtAuthz([ "manage:users" ], { customScopeKey: "permissions", customUserKey: 'auth' });
 
 // public key for certificate generation validation
-// TODO: PRIMA ESEGUIRE SCRIPT PYTHON E VEDERE SE FUNZIONA, POI FARE CHIAMATA AL SERVER SENZA PASSARE DA CLIENT E VEDERE SE FUNZIONZ, INFINE FARE CHIAMATA DA CLIENT
 async function validate_pub_key_format(pubKey) {
   // Define the expected patterns
   const begin_pattern = "-----BEGIN NEBULA X25519 PUBLIC KEY-----"
