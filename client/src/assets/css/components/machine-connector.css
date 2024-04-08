@@ -1,0 +1,67 @@
+.machines-connector {
+    /* responsive */
+
+    padding: 3.2rem 6.4rem;
+}
+
+.machines-connector__title {
+    color: var(--white);
+    font-weight: 600;
+    text-align: center;
+
+    /* responsive */
+
+    margin-top: 0;
+    margin-bottom: 4.8rem;
+
+    font-size: 3.2rem;
+    line-height: 3.2rem;
+}
+
+.machines-connector__grid {
+    display: block;
+
+    /* responsive */
+    row-gap: 6.4rem;
+}
+
+.machines-connector__file-selector {
+    text-align: center;
+}
+
+.machines-connector__file-selector-text {
+    height: 5.0rem;
+    font-size: 2.0rem;
+    text-align:center;
+    margin-right: 5rem;
+    border-radius: 0.5rem;
+    outline-width: 0;
+    width: 70%;
+}
+
+.machines-connector__text-area-container {
+    text-align: center;
+    margin-top: 3.0rem;
+}
+
+.machines-connector__text-area-title {
+    color: var(--white);
+    font-weight: 200;
+
+    font-size: 3.0rem;
+    line-height: 3.0rem;
+}
+
+.machines-connector__text-area {
+    height: 5.0rem;
+    font-size: 2.0rem;
+    text-align:center;
+    border-radius: 0.5rem;
+    outline-width: 0;
+    width: 91%;
+}
+
+.machines-connector__request-container {
+    text-align: center;
+    margin-top: 4.0rem;
+}

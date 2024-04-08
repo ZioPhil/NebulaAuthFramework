@@ -141,6 +141,78 @@
   transition: background 0.3s ease-out, color 0.3s ease-out;
 }
 
+.button__choice {
+  position: relative;
+  min-width: 8.4rem;
+  margin-left: 1.0rem;
+  margin-right: 1.0rem;
+
+  border: 0.1rem solid var(--indigo);
+  color: var(--white);
+  background: var(--indigo);
+  width: 40%;
+  font-size: 1.6rem;
+
+  font-family: var(--font-primary);
+  font-style: normal;
+  font-weight: 600;
+  line-height: 3.2rem;
+  padding: 0.8rem 0;
+  border-radius: 0.8rem;
+  text-align: center;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition: background 0.3s ease-out, color 0.3s ease-out;
+}
+
+.button__select {
+  max-width: 17.5rem;
+
+  border: 0.1rem solid var(--indigo);
+  color: var(--white);
+  background: var(--indigo);
+  width: 50%;
+  font-size: 1.8rem;
+
+  font-family: var(--font-primary);
+  font-style: normal;
+  font-weight: 600;
+  line-height: 3.2rem;
+  padding: 0.8rem 0;
+  border-radius: 0.8rem;
+  text-align: center;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition: background 0.3s ease-out, color 0.3s ease-out;
+}
+
+.button__connect {
+  max-width: 25rem;
+
+  border: 0.1rem solid var(--indigo);
+  color: var(--white);
+  background: var(--indigo);
+  width: 50%;
+  font-size: 2.3rem;
+
+  font-family: var(--font-primary);
+  font-style: normal;
+  font-weight: 600;
+  line-height: 3.8rem;
+  padding: 0.8rem 0;
+  border-radius: 0.8rem;
+  text-align: center;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition: background 0.3s ease-out, color 0.3s ease-out;
+}
+
 .button__login:last-child,
 .button__logout:last-child,
 .button__sign-up:last-child {

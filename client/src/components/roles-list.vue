@@ -1,9 +1,9 @@
 <template>
-  <div class="profiles">
-    <h2 class="profiles__title">{{ title }}</h2>
-    <div class="profiles__grid">
-      <div v-for="user in users" :key="user.user_id" @click="showModal(user)">
-        <ProfileCard :name="user.name" :id="user.user_id" />
+  <div class="roles">
+    <h2 class="roles__title">{{ title }}</h2>
+    <div class="roles__grid">
+      <div v-for="role in roles" :key="role.id" @click="showModal(role)">
+        <RoleCard :name="role.name" :id="role.id" />
       </div>
     </div>
   </div>
@@ -17,21 +17,21 @@
 
 <script setup>
 import Modal from "@/components/admin-choice-modal.vue";
-import ProfileCard from "@/components/profile-card.vue";
-import { getUsers } from "@/services/machine.service";
+import RoleCard from "@/components/role-card.vue";
+import { getRoles } from "@/services/machine.service";
 import { ref } from "vue";
 import { useAuth0 } from "@auth0/auth0-vue";
 import { useRouter } from "vue-router";
 
-const users = ref([]);
+const roles = ref([]);
 const title = ref("");
 const isModalVisible = ref(false);
-const currUser = ref();
+const currRole = ref();
 const { getAccessTokenSilently } = useAuth0();
 const router = useRouter();
 
-// get all the users from the server
-const getUserData = async () => {
+// get all the roles from the server
+const getRoleData = async () => {
   try {
     const token = await getAccessTokenSilently({
       authorizationParams: {
@@ -40,11 +40,11 @@ const getUserData = async () => {
       },
     });
 
-    const { data, error } = await getUsers(token);
+    const { data, error } = await getRoles(token);
 
     if (data) {
-      users.value = data;
-      title.value = "Users List";
+      roles.value = data;
+      title.value = "Roles List";
     }
 
     if (error) {
@@ -56,21 +56,23 @@ const getUserData = async () => {
   }
 };
 
-const showModal = async (user) => {
+const showModal = async (role) => {
   isModalVisible.value = true;
-  currUser.value = user;
+  currRole.value = role;
 };
 const closeModal = async () => {
   isModalVisible.value = false;
 };
 
 const machinesRedirect = async () => {
+  /*
   await router.push({
     name: "setMachines",
     params: { userId: currUser.value.user_id, userName: currUser.value.name },
   });
+   */
 };
 const usersRedirect = async () => {};
 
-getUserData();
+getRoleData();
 </script>

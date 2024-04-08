@@ -1,9 +1,15 @@
 <template>
-  <a class="machine">
+  <router-link
+    :to="{
+      name: 'connectToMachine',
+      params: { machineName: machine.name },
+    }"
+    class="machine"
+  >
     <h3 class="machine__headline">
       {{ machine.name }}
     </h3>
-  </a>
+  </router-link>
 </template>
 
 <script setup>

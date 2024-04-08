@@ -1,10 +1,10 @@
 <template>
   <PageLayout>
-    <ProfilesList></ProfilesList>
+    <RolesList></RolesList>
   </PageLayout>
 </template>
 
 <script setup>
 import PageLayout from "@/components/page-layout.vue";
-import ProfilesList from "@/components/profiles-list.vue";
+import RolesList from "@/components/roles-list.vue";
 </script>

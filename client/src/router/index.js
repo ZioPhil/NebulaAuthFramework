@@ -7,6 +7,7 @@ const ProtectedPage = () => import("@/pages/protected-page.vue");
 const AdminPage = () => import("@/pages/admin-page.vue");
 const CallbackPage = () => import("@/pages/callback-page.vue");
 const SetMachinesPage = () => import("@/pages/set-machines-page.vue");
+const MachineConnectionPage = () => import("@/pages/machine-connection-page.vue");
 
 const routes = [
   {
@@ -30,6 +31,13 @@ const routes = [
     path: "/set-machines/:userId:userName",
     name: "setMachines",
     component: SetMachinesPage,
+    beforeEnter: authGuard, // can access this page only if authenticated
+    props: true,
+  },
+  {
+    path: "/connect/:machineName",
+    name: "connectToMachine",
+    component: MachineConnectionPage,
     beforeEnter: authGuard, // can access this page only if authenticated
     props: true,
   },
