@@ -167,6 +167,30 @@
   transition: background 0.3s ease-out, color 0.3s ease-out;
 }
 
+.button__create-role-modal {
+  position: relative;
+  min-width: 8.4rem;
+
+  border: 0.1rem solid var(--indigo);
+  color: var(--white);
+  background: var(--indigo);
+  width: 40%;
+  font-size: 1.6rem;
+
+  font-family: var(--font-primary);
+  font-style: normal;
+  font-weight: 600;
+  line-height: 3.2rem;
+  padding: 0.8rem 0;
+  border-radius: 0.8rem;
+  text-align: center;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition: background 0.3s ease-out, color 0.3s ease-out;
+}
+
 .button__select {
   max-width: 17.5rem;
 
@@ -209,6 +233,52 @@
 
   cursor: pointer;
   user-select: none;
+
+  transition: background 0.3s ease-out, color 0.3s ease-out;
+}
+
+.button__add-role {
+  max-width: 20.4rem;
+
+  border: 0.1rem solid var(--indigo);
+  color: var(--white);
+  background: var(--indigo);
+  width: 50%;
+  font-size: 1.8rem;
+
+  margin-top: 2.0rem;
+
+  font-family: var(--font-primary);
+  font-style: normal;
+  font-weight: 600;
+  line-height: 3.2rem;
+  padding: 0.8rem 0;
+  border-radius: 0.8rem;
+  text-align: center;
+
+  cursor: pointer;
+  user-select: none;
+
+  transition: background 0.3s ease-out, color 0.3s ease-out;
+}
+
+.button__delete-role {
+  border: 0.1rem solid var(--orange);
+  color: var(--white);
+  background: var(--orange);
+  width: 25%;
+  font-size: 1.5rem;
+
+  font-family: var(--font-primary);
+  font-style: normal;
+  font-weight: 500;
+  border-radius: 0.8rem;
+  text-align: center;
+
+  cursor: pointer;
+  user-select: none;
+
+  margin-left: 25.0rem;
 
   transition: background 0.3s ease-out, color 0.3s ease-out;
 }

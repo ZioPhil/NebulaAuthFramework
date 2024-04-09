@@ -8,6 +8,7 @@ const AdminPage = () => import("@/pages/admin-page.vue");
 const CallbackPage = () => import("@/pages/callback-page.vue");
 const SetMachinesPage = () => import("@/pages/set-machines-page.vue");
 const MachineConnectionPage = () => import("@/pages/machine-connection-page.vue");
+const ProfilesPage = () => import("@/pages/profiles-page.vue");
 
 const routes = [
   {
@@ -26,6 +27,13 @@ const routes = [
     name: "admin",
     component: AdminPage,
     beforeEnter: authGuard, // can access this page only if authenticated
+  },
+  {
+    path: "/set-users/:roleId:roleName",
+    name: "setUsers",
+    component: ProfilesPage,
+    beforeEnter: authGuard, // can access this page only if authenticated
+    props: true,
   },
   {
     path: "/set-machines/:userId:userName",

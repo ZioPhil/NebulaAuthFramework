@@ -38,13 +38,16 @@ export const getMachinesAdmin = async (accessToken) => {
   };
 };
 
-export const getUsers = async (accessToken) => {
+export const getUsers = async (role, accessToken) => {
   const config = {
     url: `${apiServerUrl}/users`,
-    method: "GET",
+    method: "POST",
     headers: {
       "content-type": "application/json",
       Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      role,
     },
   };
 
@@ -63,6 +66,71 @@ export const getRoles = async (accessToken) => {
     headers: {
       "content-type": "application/json",
       Authorization: `Bearer ${accessToken}`,
+    },
+  };
+
+  const { data, error } = await callExternalApi({ config });
+
+  return {
+    data: data || null,
+    error,
+  };
+};
+
+export const updateRoles = async (roleId, userId, value, accessToken) => {
+  const config = {
+    url: `${apiServerUrl}/updateRoles`,
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      roleId,
+      userId,
+      value,
+    },
+  };
+
+  const { data, error } = await callExternalApi({ config });
+
+  return {
+    data: data || null,
+    error,
+  };
+};
+
+export const createRole = async (name, accessToken) => {
+  const config = {
+    url: `${apiServerUrl}/createRole`,
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      name,
+    },
+  };
+
+  const { data, error } = await callExternalApi({ config });
+
+  return {
+    data: data || null,
+    error,
+  };
+};
+
+export const deleteRole = async (roleId, accessToken) => {
+  const config = {
+    url: `${apiServerUrl}/deleteRole`,
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      roleId,
     },
   };
 

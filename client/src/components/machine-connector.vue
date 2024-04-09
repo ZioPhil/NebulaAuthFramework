@@ -35,8 +35,8 @@
 </template>
 
 <script setup>
-import Modal from "@/components/error-modal.vue";
-import CertModal from "@/components/cert-modal.vue"
+import Modal from "@/components/modals/error-modal.vue";
+import CertModal from "@/components/modals/cert-modal.vue"
 
 const machine = defineProps({
   name: String,

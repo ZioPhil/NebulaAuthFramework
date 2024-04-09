@@ -57,23 +57,36 @@ const checkPermissions = jwtAuthz([ "manage:users" ], { customScopeKey: "permiss
 let machines = require('./machines_db')
 
 // get all users
-app.get('/users', checkJwt, checkPermissions, (req, res) => {
+app.post('/users', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received users request")
   const userId = req.auth.sub
+  const roleId = req.body.role
 
-  managementAPI.users.getAll()
-    .then(function(users) {
-
-      // remove current user from final result
-      for(let i = 0; i < users.data.length; i++) {
-        if(users.data[i].user_id === userId) {
+  await managementAPI.users.getAll()
+    .then(async function(users) {
+      for (let i = 0; i < users.data.length; i++) {
+        // remove current user from final result
+        if (users.data[i].user_id === userId) {
           users.data.splice(i, 1);
+          i--;
+          continue
         }
+        //check if user has role
+        await managementAPI.users.getRoles({id: users.data[i].user_id})
+          .then(function(roles) {
+            for (let j = 0; j < roles.data.length; j++) {
+              if (roles.data[j].id === roleId) {
+                users.data[i].hasRole = true;
+                break;
+              }
+            }
+            if (!users.data[i].hasRole) {
+              users.data[i].hasRole = false;
+            }
+          })
       }
-
       res.send(users.data);
-    })
-    .catch(function(err) {
+    }).catch(function(err) {
       console.log(err);
     });
 });
@@ -93,12 +106,79 @@ app.get('/roles', checkJwt, checkPermissions, (req, res) => {
       }
 
       res.send(roles.data);
-    })
-    .catch(function(err) {
+    }).catch(function(err) {
       console.log(err);
     });
 });
 
+app.post('/updateRoles', checkJwt, checkPermissions, (req, res) => {
+  console.log("Received update roles request")
+  const roleId = req.body.roleId
+  const userId = req.body.userId
+  const value = req.body.value
+
+  if (value) {
+    managementAPI.users.assignRoles({ id: userId }, { roles: [roleId] })
+      .then(function(response) {
+        if (response.status === 204) {
+          res.send(true);
+        }
+        else {
+          res.send(false);
+        }
+      }).catch(function(err) {
+      console.log(err);
+    });
+  }
+  else {
+    managementAPI.users.deleteRoles({ id: userId }, { roles: [roleId] })
+      .then(function(response) {
+        if (response.status === 204) {
+          res.send(true);
+        }
+        else {
+          res.send(false);
+        }
+      }).catch(function(err) {
+      console.log(err);
+    });
+  }
+});
+
+app.post('/createRole', checkJwt, checkPermissions, (req, res) => {
+  console.log("Received create role request")
+  const roleName = req.body.name
+
+  managementAPI.roles.create({ name: roleName })
+    .then(function(response) {
+      if (response.status === 200){
+        res.send(true)
+      }
+      else {
+        res.send(false)
+      }
+    }).catch(function(err) {
+    console.log(err);
+  });
+});
+
+app.post('/deleteRole', checkJwt, checkPermissions, (req, res) => {
+  console.log("Received delete role request")
+
+  managementAPI.roles.delete({ id: req.body.roleId })
+    .then(function(response) {
+      if (response.status === 200) {
+        res.send(true);
+      }
+      else {
+        res.send(false);
+      }
+    }).catch(function(err) {
+    console.log(err);
+  });
+});
+
+// TODO: modify what machines the user gets based on roles
 // get machines available to the user
 app.get('/machinesNormal', checkJwt, (req, res) => {
   console.log("Received machines request")
