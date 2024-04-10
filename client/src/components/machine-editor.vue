@@ -1,17 +1,15 @@
 <template>
   <div class="machines-editor">
     <h2 class="machines-editor__title">
-      Editing available machines for {{ user.name }}
-      <button class="button__save" @click="handleSave(machines, user.userId)">
-        Save changes
-      </button>
+      Editing machines for {{ role.name }} role
     </h2>
     <div class="machines-editor__grid">
       <div v-for="machine in machines" :key="machine.id">
         <MachineCard
-          :machineName="machine.name"
-          :machineUsersList="machine.users"
-          :userId="user.userId"
+          :id="machine.id"
+          :name="machine.name"
+          :isAvailable="machine.isAvailable"
+          :roleId="role.id"
           ref="cards"
         />
       </div>
@@ -20,13 +18,13 @@
 </template>
 
 <script setup>
-import MachineCard from "@/components/machine-editor-card.vue";
+import MachineCard from "@/components/machine-editor-card.vue"
 import { getMachinesAdmin } from "@/services/machine.service";
 import { useAuth0 } from "@auth0/auth0-vue";
 import { ref } from "vue";
 
-const user = defineProps({
-  userId: String,
+const role = defineProps({
+  id: String,
   name: String,
 });
 
@@ -40,11 +38,11 @@ const getMachs = async () => {
     const token = await getAccessTokenSilently({
       authorizationParams: {
         audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-        scope: "read:machines",
+        scope: "manage:users",
       },
     });
 
-    const { data, error } = await getMachinesAdmin(token);
+    const { data, error } = await getMachinesAdmin(role.id, token);
 
     if (data) {
       machines.value = data;
@@ -59,47 +57,4 @@ const getMachs = async () => {
 };
 
 getMachs();
-</script>
-
-<script>
-import { updateMachine } from "@/services/machine.service";
-export default {
-  methods: {
-    async handleSave(machines, id) {
-      // TODO: tell to the user that the changes have been saved
-      for (let i = 0; i < machines.length; i++) {
-        if (machines[i].users.includes(id) && !this.$refs.cards[i].status) {
-          machines[i].users.splice(machines[i].users.indexOf(id), 1);
-          await this.updateMachine(machines[i]);
-        } else if (!machines[i].users.includes(id) && this.$refs.cards[i].status) {
-          machines[i].users.push(id);
-          await this.updateMachine(machines[i]);
-        }
-      }
-    },
-
-    async updateMachine(machine) {
-      try {
-        const token = await this.$auth0.getAccessTokenSilently({
-          authorizationParams: {
-            audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-            scope: "manage:users",
-          },
-        });
-
-        const { data, error } = await updateMachine(machine, token);
-
-        if (data === true) {
-          console.log();
-        }
-
-        if (error) {
-          console.error(error);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    },
-  },
-};
 </script>

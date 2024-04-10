@@ -59,30 +59,25 @@ let machines = require('./machines_db')
 // get all users
 app.post('/users', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received users request")
-  const userId = req.auth.sub
   const roleId = req.body.role
 
   await managementAPI.users.getAll()
     .then(async function(users) {
       for (let i = 0; i < users.data.length; i++) {
-        // remove current user from final result
-        if (users.data[i].user_id === userId) {
-          users.data.splice(i, 1);
-          i--;
-          continue
-        }
-        //check if user has role
         await managementAPI.users.getRoles({id: users.data[i].user_id})
           .then(function(roles) {
+            let roleIdList = []
             for (let j = 0; j < roles.data.length; j++) {
-              if (roles.data[j].id === roleId) {
-                users.data[i].hasRole = true;
-                break;
-              }
+              roleIdList.push(roles.data[j].id)
             }
-            if (!users.data[i].hasRole) {
-              users.data[i].hasRole = false;
+
+            // remove admins from list
+            if (roleIdList.includes(process.env.VITE_AUTH0_ADMIN_ROLE_ID)) {
+              users.data.splice(i, 1);
+              i--;
             }
+            //check if user has role
+            else users.data[i].hasRole = roleIdList.includes(roleId);
           })
       }
       res.send(users.data);
@@ -99,7 +94,7 @@ app.get('/roles', checkJwt, checkPermissions, (req, res) => {
     .then(function(roles) {
       // remove srs_admin role from final result
       for(let i = 0; i < roles.data.length; i++) {
-        if(roles.data[i].id === "rol_MhCs8029DkZfxAuu") {
+        if(roles.data[i].id === process.env.VITE_AUTH0_ADMIN_ROLE_ID) {
           roles.data.splice(i, 1);
           break;
         }
@@ -111,8 +106,9 @@ app.get('/roles', checkJwt, checkPermissions, (req, res) => {
     });
 });
 
-app.post('/updateRoles', checkJwt, checkPermissions, (req, res) => {
-  console.log("Received update roles request")
+// update users for role
+app.post('/updateRoleUsers', checkJwt, checkPermissions, (req, res) => {
+  console.log("Received update role users request")
   const roleId = req.body.roleId
   const userId = req.body.userId
   const value = req.body.value
@@ -145,6 +141,51 @@ app.post('/updateRoles', checkJwt, checkPermissions, (req, res) => {
   }
 });
 
+// update machines for role
+app.post('/updateRoleMachines', checkJwt, checkPermissions, async (req, res) => {
+  console.log("Received update role machines request")
+  const roleId = req.body.roleId
+  const machineId = req.body.machineId
+  const value = req.body.value
+  let found = false
+
+  try {
+    if (value) {
+      for (let i = 0; i < machines.length; i++) {
+        if (machines[i].id === machineId) {
+          found = true//check if user has role
+          machines[i].roles.push(roleId)
+
+          await FileSystem.writeFile('machines_db.json', JSON.stringify(machines), (error) => {
+            if (error) throw error;
+          });
+
+          res.send(true)
+        }
+      }
+      if (!found) res.send(false)
+    } else {
+      for (let i = 0; i < machines.length; i++) {
+        if (machines[i].id === machineId) {
+          found = true
+          machines[i].roles.splice(machines[i].roles.indexOf(roleId), 1);
+
+          await FileSystem.writeFile('machines_db.json', JSON.stringify(machines), (error) => {
+            if (error) throw error;
+          });
+
+          res.send(true)
+        }
+      }
+      if (!found) res.send(false)
+    }
+  } catch (err) {
+    console.log(err)
+    res.status(500).send(err)
+  }
+});
+
+// create new role
 app.post('/createRole', checkJwt, checkPermissions, (req, res) => {
   console.log("Received create role request")
   const roleName = req.body.name
@@ -162,91 +203,135 @@ app.post('/createRole', checkJwt, checkPermissions, (req, res) => {
   });
 });
 
+// delete role
 app.post('/deleteRole', checkJwt, checkPermissions, (req, res) => {
   console.log("Received delete role request")
 
-  managementAPI.roles.delete({ id: req.body.roleId })
-    .then(function(response) {
-      if (response.status === 200) {
-        res.send(true);
-      }
-      else {
-        res.send(false);
-      }
-    }).catch(function(err) {
-    console.log(err);
-  });
+  if (req.body.roleId !== process.env.VITE_AUTH0_ADMIN_ROLE_ID) {
+    managementAPI.roles.delete({ id: req.body.roleId })
+      .then(function(response) {
+        if (response.status === 200) {
+          res.send(true);
+        }
+        else {
+          res.send(false);
+        }
+      }).catch(function(err) {
+      console.log(err);
+    });
+  }
+  else res.status(403).send("Can't remove admin role")
 });
 
-// TODO: modify what machines the user gets based on roles
 // get machines available to the user
-app.get('/machinesNormal', checkJwt, (req, res) => {
+app.get('/machinesNormal', checkJwt, async (req, res) => {
   console.log("Received machines request")
-  if(req.auth.permissions.includes('manage:users')) {
+
+  if (req.auth.permissions.includes('manage:users')) {
     res.send(machines);
   }
   else {
-    const userId = req.auth.sub
+    let roleIdList = []
     let customList = []
-    for (let i = 0; i < machines.length; i++){
-      if(machines[i].users.includes(userId)) {
-        customList.push(machines[i])
-      }
-    }
-    res.send(customList)
+
+    await managementAPI.users.getRoles({ id: req.auth.sub })
+      .then(function(roles) {
+        for (let i = 0; i < roles.data.length; i++) {
+          roleIdList.push(roles.data[i].id)
+        }
+        for (let i = 0; i < machines.length; i++) {
+          for (let j = 0; j < machines[i].roles.length; j++) {
+            if (roleIdList.includes(machines[i].roles[j])) {
+              customList.push(machines[i])
+              break
+            }
+          }
+        }
+        res.send(customList)
+      }).catch(function(err) {
+        console.log(err);
+        res.status(500).send(err)
+      });
   }
 });
 
 // get all machines
-app.get('/machinesAdmin', checkJwt, checkPermissions, (req, res) => {
+app.post('/machinesAdmin', checkJwt, checkPermissions, (req, res) => {
   console.log("Received machines admin request")
-  res.send(machines);
-});
-
-// update list of users that can access a machine
-app.post('/updateMachine', checkJwt, checkPermissions, async (req, res) => {
-  console.log("Received updateMachine request")
-  const machine = req.body.machine;
+  const roleId = req.body.role
 
   for (let i = 0; i < machines.length; i++) {
-    if (machines[i].id === machine.id) {
-      machines[i].users = machine.users;
-      break;
-    }
+    machines[i].isAvailable = machines[i].roles.includes(roleId);
   }
-  await FileSystem.writeFile('machines_db.json', JSON.stringify(machines), (error) => {
-    if (error) throw error;
-  });
 
-  res.send(true)
+  res.send(machines);
 });
 
 // generate certificate for a given machine
 app.post('/generateCertificate', checkJwt, async (req, res) => {
   console.log("Received certificate generation request")
+  const key = req.body.key
+  const name = req.body.name
+  const ip_address = req.body.ip_address
+  const groups = req.body.groups
+  let found = false
 
-  const formData = new FormData();
-  formData.append("key", req.body.key);
-  formData.append("name", req.body.name);
-  formData.append("ip_address", req.body.ip_address);
-  formData.append("groups", req.body.groups);
+  // check if the user can access the machine
+  let roleIdList = []
+  await managementAPI.users.getRoles({ id: req.auth.sub })
+    .then(async function(roles) {
+      for (let i = 0; i < roles.data.length; i++) {
+        roleIdList.push(roles.data[i].id)
+      }
 
-  const config = {
-    url: `${nebulaApiServerUrl}/generate_certificate`,
-    method: "POST",
-    headers: {
-      "content-type": "multipart/form-data",
-    },
-    data: formData,
-  };
+      if (roleIdList.includes(process.env.VITE_AUTH0_ADMIN_ROLE_ID)) {
+        found = true // the user is an admin
+      }
+      else {
+        for (let i = 0; i < machines.length; i++) {
+          if (machines[i].name === name) {
+            for (let j = 0; j < machines[i].roles.length; j++) {
+              if (roleIdList.includes(machines[i].roles[j])) {
+                found = true
+                break
+              }
+            }
+          }
+          if (found) break
+        }
+      }
+    }).catch(function(err) {
+      console.log(err);
+      res.status(500).send(err)
+    });
 
-  const { data, error } = await callExternalApi({ config });
+  if (found) {
+    const formData = new FormData();
+    formData.append("key", key);
+    formData.append("name", name);
+    formData.append("ip_address", ip_address);
+    formData.append("groups", groups);
 
-  if(data) {
-    res.send(data)
+    const config = {
+      url: `${nebulaApiServerUrl}/generate_certificate`,
+      method: "POST",
+      headers: {
+        "content-type": "multipart/form-data",
+      },
+      data: formData,
+    };
+
+    const { data, error } = await callExternalApi({ config });
+
+    if (data) {
+      res.send(data)
+    }
+    if (error) {
+      res.status(500).send(error.message)
+    }
   }
-  if(error) {
-    res.status(500).send(error.message)
+  else {
+    res.status(403).send("You can't access this machine")
   }
 })
 

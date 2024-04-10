@@ -13,7 +13,7 @@
 
 <script setup>
 
-import { updateRoles } from "@/services/machine.service";
+import { updateRoleUsers } from "@/services/machine.service";
 import { ref } from "vue";
 import { useAuth0 } from "@auth0/auth0-vue";
 const { getAccessTokenSilently } = useAuth0();
@@ -38,7 +38,7 @@ const handleClick = async () => {
 
     // TODO:button unclickable and popup until operation completes
     roleValue.value = !roleValue.value
-    const { data, error } = await updateRoles(user.roleId, user.id, roleValue.value, token);
+    const { data, error } = await updateRoleUsers(user.roleId, user.id, roleValue.value, token);
 
     if (data === true) {
 

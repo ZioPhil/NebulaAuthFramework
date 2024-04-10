@@ -3,7 +3,7 @@
     <div class="roles__titlebar-grid">
       <div class="roles__titlebar-container">
         <h2 class="roles__title">{{ title }}</h2>
-        <button class="button__add-role" @click="handleCreate()">
+        <button v-if="isAdmin" class="button__add-role" @click="handleCreate()">
           + Create Role
         </button>
       </div>
@@ -44,6 +44,7 @@ const roles = ref([]);
 const title = ref("");
 const isModalVisible = ref(false);
 const isCreateRoleModalVisible = ref(false);
+const isAdmin = ref(false);
 const currRole = ref();
 const { getAccessTokenSilently } = useAuth0();
 const router = useRouter();
@@ -63,6 +64,7 @@ const getRoleData = async () => {
     if (data) {
       roles.value = data;
       title.value = "Roles List";
+      isAdmin.value = true;
     }
 
     if (error) {
@@ -83,7 +85,10 @@ const closeModal = async () => {
 };
 
 const machinesRedirect = async () => {
-
+  await router.push({
+    name: "setMachines",
+    params: { roleId: currRole.value.id, roleName: currRole.value.name },
+  });
 };
 const usersRedirect = async () => {
   await router.push({

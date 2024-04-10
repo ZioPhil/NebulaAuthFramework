@@ -36,7 +36,7 @@ const routes = [
     props: true,
   },
   {
-    path: "/set-machines/:userId:userName",
+    path: "/set-machines/:roleId:roleName",
     name: "setMachines",
     component: SetMachinesPage,
     beforeEnter: authGuard, // can access this page only if authenticated

@@ -1,6 +1,6 @@
 <template>
   <PageLayout>
-    <MachineEditor :userId="user.userId" :name="user.userName" />
+    <MachineEditor :id="role.roleId" :name="role.roleName" />
   </PageLayout>
 </template>
 
@@ -8,8 +8,8 @@
 import PageLayout from "@/components/page-layout.vue";
 import MachineEditor from "@/components/machine-editor.vue";
 
-const user = defineProps({
-  userId: String,
-  userName: String,
+const role = defineProps({
+  roleId: String,
+  roleName: String,
 });
 </script>

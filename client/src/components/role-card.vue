@@ -27,6 +27,7 @@ const deleteR = async () => {
       },
     });
 
+    // TODO: are you sure you want to delete role? modal
     const { data, error } = await deleteRole(role.id, token);
 
     if (data === true) {

@@ -20,13 +20,16 @@ export const getMachinesNormal = async (accessToken) => {
   };
 };
 
-export const getMachinesAdmin = async (accessToken) => {
+export const getMachinesAdmin = async (role, accessToken) => {
   const config = {
     url: `${apiServerUrl}/machinesAdmin`,
-    method: "GET",
+    method: "POST",
     headers: {
       "content-type": "application/json",
       Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      role,
     },
   };
 
@@ -77,9 +80,9 @@ export const getRoles = async (accessToken) => {
   };
 };
 
-export const updateRoles = async (roleId, userId, value, accessToken) => {
+export const updateRoleUsers = async (roleId, userId, value, accessToken) => {
   const config = {
-    url: `${apiServerUrl}/updateRoles`,
+    url: `${apiServerUrl}/updateRoleUsers`,
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -88,6 +91,29 @@ export const updateRoles = async (roleId, userId, value, accessToken) => {
     data: {
       roleId,
       userId,
+      value,
+    },
+  };
+
+  const { data, error } = await callExternalApi({ config });
+
+  return {
+    data: data || null,
+    error,
+  };
+};
+
+export const updateRoleMachines = async (roleId, machineId, value, accessToken) => {
+  const config = {
+    url: `${apiServerUrl}/updateRoleMachines`,
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      roleId,
+      machineId,
       value,
     },
   };
@@ -131,27 +157,6 @@ export const deleteRole = async (roleId, accessToken) => {
     },
     data: {
       roleId,
-    },
-  };
-
-  const { data, error } = await callExternalApi({ config });
-
-  return {
-    data: data || null,
-    error,
-  };
-};
-
-export const updateMachine = async (machine, accessToken) => {
-  const config = {
-    url: `${apiServerUrl}/updateMachine`,
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    data: {
-      machine,
     },
   };
 
