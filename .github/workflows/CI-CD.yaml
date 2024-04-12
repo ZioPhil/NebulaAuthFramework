@@ -24,5 +24,8 @@ jobs:
 
       - name: Build and push API Docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/api:latest -f ./Dockerfile .
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/api:latest
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/client:latest -f ./client/Dockerfile .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/client:latest
+
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/server:latest -f ./server/Dockerfile .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/server:latest
