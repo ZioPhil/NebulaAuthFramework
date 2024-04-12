@@ -4,14 +4,11 @@ FROM node:21-alpine
 # Set working directory
 WORKDIR /app/client
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+# Copy the client application
+COPY . .
 
 # Install dependencies
 RUN npm install
-
-# Copy the rest of the client application
-COPY . .
 
 # Build the client app
 RUN npm run build
