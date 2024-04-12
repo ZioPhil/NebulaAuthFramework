@@ -2,7 +2,7 @@
 FROM node:21-alpine
 
 # Set working directory
-WORKDIR /client
+WORKDIR /app/client
 
 # Copy package.json and package-lock.json
 COPY package*.json ./
