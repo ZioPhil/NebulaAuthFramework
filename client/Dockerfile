@@ -7,6 +7,8 @@ WORKDIR /app/client
 # Copy package.json and package-lock.json
 ADD package* .
 
+RUN ls .
+
 # Install dependencies
 RUN npm install
 
