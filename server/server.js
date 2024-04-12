@@ -53,6 +53,7 @@ const checkJwt = jwt({
 // Admin permission validation
 const checkPermissions = jwtAuthz([ "manage:users" ], { customScopeKey: "permissions", customUserKey: 'auth' });
 
+// TODO: add logs
 // TODO: temporary custom data, implement nebula network connection
 let machines = require('./machines_db')
 
@@ -157,7 +158,7 @@ app.post('/updateRoleMachines', checkJwt, checkPermissions, async (req, res) => 
           machines[i].roles.push(roleId)
 
           await FileSystem.writeFile('machines_db.json', JSON.stringify(machines), (error) => {
-            if (error) throw error;
+            if (error) res.status(500).send("Error while saving machines configuration");
           });
 
           res.send(true)
@@ -171,7 +172,7 @@ app.post('/updateRoleMachines', checkJwt, checkPermissions, async (req, res) => 
           machines[i].roles.splice(machines[i].roles.indexOf(roleId), 1);
 
           await FileSystem.writeFile('machines_db.json', JSON.stringify(machines), (error) => {
-            if (error) throw error;
+            if (error) res.status(500).send("Error while saving machines configuration");
           });
 
           res.send(true)
@@ -181,7 +182,7 @@ app.post('/updateRoleMachines', checkJwt, checkPermissions, async (req, res) => 
     }
   } catch (err) {
     console.log(err)
-    res.status(500).send(err)
+    res.status(500).send("Error while saving machines configuration");
   }
 });
 
