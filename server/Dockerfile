@@ -5,7 +5,7 @@ FROM node:21-alpine
 WORKDIR /app/server
 
 # Copy package.json and package-lock.json
-COPY package*.json ./
+COPY ./server/package* .
 
 # Install dependencies
 RUN npm install
@@ -14,7 +14,7 @@ RUN npm install
 RUN npm install node-fetch
 
 # Copy the rest of the server application
-COPY . .
+COPY ./server .
 
 # Expose the port the server will run on
 EXPOSE 8000
