@@ -22,10 +22,12 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push API Docker image
+      - name: Build and push API client Docker image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/client:latest -f ./client/Dockerfile .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/client:latest
 
+      - name: Build and push API server Docker image
+        run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/server:latest -f ./server/Dockerfile .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/server:latest
