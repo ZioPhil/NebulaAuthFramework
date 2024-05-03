@@ -11,7 +11,7 @@
 import { deleteRole } from "@/services/machine.service";
 import { useAuth0 } from "@auth0/auth0-vue";
 const { getAccessTokenSilently } = useAuth0();
-const emit = defineEmits(['reload'])
+const emit = defineEmits(['reload', 'error'])
 
 const role = defineProps({
   name: String,
@@ -30,18 +30,18 @@ const deleteR = async () => {
     // TODO: are you sure you want to delete role? modal
     const { data, error } = await deleteRole(role.id, token);
 
-    if (data === true) {
+    if (data) {
       emit('reload');
-    }
-    else {
-      console.log("Error while deleting role on server")
     }
 
     if (error) {
-      console.error(error);
+      if (error.message === "Insufficient scope") {
+        emit('error', 'You are not an admin')
+      }
+      else emit('error', error)
     }
   } catch (e) {
-    console.error(e);
+    emit('error', e)
   }
 };
 </script>

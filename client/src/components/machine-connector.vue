@@ -39,6 +39,7 @@ import Modal from "@/components/modals/error-modal.vue";
 import CertModal from "@/components/modals/cert-modal.vue"
 
 const machine = defineProps({
+  id: String,
   name: String,
 });
 
@@ -93,6 +94,7 @@ export default {
         // TODO: popup until certificate is loaded
         const { data, error } = await generateCertificate(
           await this.$refs.file.files[0].text(),
+          this.$props.id,
           this.$props.name,
           this.$refs.ip.value,
           token
@@ -103,10 +105,10 @@ export default {
         }
 
         if (error) {
-          console.error(error);
+          this.showModal(error.message)
         }
       } catch (e) {
-        console.error(e);
+        this.showModal(e.message)
       }
     },
 
