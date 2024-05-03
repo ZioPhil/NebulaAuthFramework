@@ -264,11 +264,8 @@ app.post('/machinesNormal', checkJwt, async (req, res) => {
 
     try {
       const [machines] = await connection.query(query);
-      if (machines.length === 0 && counter === 0) {
+      if (machines.length === 0) {
         res.status(403).send("You don't have access to any machine")
-      }
-      else if (machines.length === 0 && counter !== 0) {
-        res.status(404).send("No more machines")
       }
       else {
         res.send(machines)
