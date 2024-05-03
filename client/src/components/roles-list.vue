@@ -3,23 +3,17 @@
     <div class="roles__titlebar-grid">
       <div class="roles__titlebar-container">
         <h2 class="roles__title">{{ title }}</h2>
-        <button v-if="roles.length !== 0" class="button__add-role" @click="handleCreate()">
+        <button v-if="isAdmin" class="button__add-role" @click="handleCreate()">
           + Create Role
         </button>
       </div>
-      <div class="pagination" v-if="roles.length !== 0" :key="pagCounter">
-        <a @click="counterDown()">&laquo;</a>
-        <a class="central">{{pagCounter+1}}-{{roles.length + pagCounter}}</a>
-        <a @click="counterUp()">&raquo;</a>
-      </div>
     </div>
     <div class="roles__grid" :key="roles">
-      <div v-for="role in roles" :key="role.ID" @click="showModal(role)">
+      <div v-for="role in roles" :key="role.id" @click="showModal(role)">
         <RoleCard
-          :name="role.Name"
-          :id="role.ID"
+          :name="role.name"
+          :id="role.id"
           @reload="reload"
-          @error="errorHandling"
         />
       </div>
     </div>
@@ -34,13 +28,6 @@
     v-show="isCreateRoleModalVisible"
     @close="closeCreateRoleModal"
     @reload="reload"
-    @error="errorHandling"
-  />
-  <ErrorModal
-    ref="error_modal"
-    v-show="isErrorModalVisible"
-    @close="closeErrorModal"
-    :error="error"
   />
 </template>
 
@@ -52,21 +39,18 @@ import { getRoles } from "@/services/machine.service";
 import { ref } from "vue";
 import { useAuth0 } from "@auth0/auth0-vue";
 import { useRouter } from "vue-router";
-import ErrorModal from "@/components/modals/error-modal.vue";
 
 const roles = ref([]);
 const title = ref("");
-const pagCounter = ref(0);
 const isModalVisible = ref(false);
 const isCreateRoleModalVisible = ref(false);
-const isErrorModalVisible = ref(false);
-const error = ref("unknown");
+const isAdmin = ref(false);
 const currRole = ref();
 const { getAccessTokenSilently } = useAuth0();
 const router = useRouter();
 
 // get all the roles from the server
-const getRoleData = async (up) => {
+const getRoleData = async () => {
   try {
     const token = await getAccessTokenSilently({
       authorizationParams: {
@@ -75,30 +59,20 @@ const getRoleData = async (up) => {
       },
     });
 
-    let customPagCounter = pagCounter.value
-    if (up) customPagCounter += 50
-
-    const { data, error } = await getRoles(customPagCounter, token);
+    const { data, error } = await getRoles(token);
 
     if (data) {
       roles.value = data;
       title.value = "Roles List";
-      return true
+      isAdmin.value = true;
     }
 
     if (error) {
-      if (error.message === "Insufficient scope") {
-        await showErrorModal("You are not an admin")
-      }
-      else if (error.message === "No more users") {
-        return false
-      }
-      else {
-        await showErrorModal(error.message)
-      }
+      console.error(error);
+      title.value = "You are not an admin";
     }
   } catch (e) {
-    await showErrorModal(e.message)
+    console.error(e);
   }
 };
 
@@ -113,13 +87,13 @@ const closeModal = async () => {
 const machinesRedirect = async () => {
   await router.push({
     name: "setMachines",
-    params: { roleId: currRole.value.ID, roleName: currRole.value.Name },
+    params: { roleId: currRole.value.id, roleName: currRole.value.name },
   });
 };
 const usersRedirect = async () => {
   await router.push({
     name: "setUsers",
-    params: { roleId: currRole.value.ID, roleName: currRole.value.Name },
+    params: { roleId: currRole.value.id, roleName: currRole.value.name },
   });
 };
 
@@ -133,42 +107,11 @@ const closeCreateRoleModal = async () => {
 
 const reload = async () => {
   // TODO: block page until create or delete operation completes
-  await getRoleData(false)
+  await getRoleData()
   if (isCreateRoleModalVisible) {
     await closeCreateRoleModal()
   }
 }
 
-const errorHandling = async (error) => {
-  if (isCreateRoleModalVisible) {
-    await closeCreateRoleModal()
-  }
-  await showErrorModal(error.message)
-}
-
-const counterDown = async () => {
-  if (pagCounter.value !== 0) {
-    pagCounter.value -= 50
-    await getRoleData(false);
-  }
-}
-
-const counterUp = async () => {
-  if (roles.value.length === 50) {
-    if (await getRoleData(true)) {
-      pagCounter.value += 50;
-    }
-  }
-}
-
-const showErrorModal = async (err) => {
-  error.value = err
-  isErrorModalVisible.value = true;
-}
-
-const closeErrorModal = async () => {
-  isErrorModalVisible.value = false;
-}
-
-getRoleData(false);
+getRoleData();
 </script>
