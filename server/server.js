@@ -76,15 +76,19 @@ app.post('/users', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received users request")
   const groupId = req.body.role
   const counter = req.body.counter
-  const value = req.body.value
+  const value = req.body.value + "%"
+
+  let inserts = []
   let query1 = "SELECT * FROM Users"
   if (value !== "") {
-    query1 += (" WHERE Email LIKE '" + value + "%'")
+    query1 += (" WHERE Email LIKE ?")
+    inserts.push(value)
   }
-  query1 += (" ORDER BY Email LIMIT 50 OFFSET " + counter + ";")
+  query1 += (" ORDER BY Email LIMIT 50 OFFSET ?;")
+  inserts.push(counter)
 
   try {
-    const [users] = await connection.query(query1);
+    const [users] = await connection.query(query1, inserts);
     if (users.length === 0 && counter !== 0) {
       res.status(404).send("No more users")
       return
@@ -95,8 +99,10 @@ app.post('/users', checkJwt, checkPermissions, async (req, res) => {
     }
 
     for (let i = 0; i < users.length; i++) {
-      const query2 = "SELECT * FROM UserUserGroups WHERE user_ID='" + users[i].ID + "' AND group_ID='" + groupId + "';"
-      const [results] = await connection.query(query2);
+      const query2 = "SELECT * FROM UserUserGroups WHERE user_ID='" + users[i].ID + "' AND group_ID=?;"
+      let inserts = [groupId]
+
+      const [results] = await connection.query(query2, inserts);
       users[i].hasRole = results.length !== 0;
     }
     res.send(users)
