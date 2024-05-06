@@ -2,7 +2,7 @@ import { callExternalApi } from "./external-api.service";
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
 // requests to the server made with axios
-export const getUsers = async (role, counter, accessToken) => {
+export const getUsers = async (role, counter, value, accessToken) => {
   const config = {
     url: `${apiServerUrl}/users`,
     method: "POST",
@@ -13,6 +13,7 @@ export const getUsers = async (role, counter, accessToken) => {
     data: {
       role,
       counter,
+      value,
     },
   };
 
@@ -45,7 +46,7 @@ export const addUser = async (email, accessToken) => {
   };
 };
 
-export const getRoles = async (counter, accessToken) => {
+export const getRoles = async (counter, value, accessToken) => {
   const config = {
     url: `${apiServerUrl}/roles`,
     method: "POST",
@@ -55,6 +56,7 @@ export const getRoles = async (counter, accessToken) => {
     },
     data: {
       counter,
+      value,
     },
   };
 
@@ -154,7 +156,7 @@ export const deleteRole = async (roleId, accessToken) => {
   };
 };
 
-export const getMachinesNormal = async (counter, accessToken) => {
+export const getMachinesNormal = async (counter, value, accessToken) => {
   const config = {
     url: `${apiServerUrl}/machinesNormal`,
     method: "POST",
@@ -164,6 +166,7 @@ export const getMachinesNormal = async (counter, accessToken) => {
     },
     data: {
       counter,
+      value,
     },
   };
 
@@ -175,7 +178,7 @@ export const getMachinesNormal = async (counter, accessToken) => {
   };
 };
 
-export const getMachinesAdmin = async (role, counter, accessToken) => {
+export const getMachinesAdmin = async (role, counter, value, accessToken) => {
   const config = {
     url: `${apiServerUrl}/machinesAdmin`,
     method: "POST",
@@ -186,6 +189,7 @@ export const getMachinesAdmin = async (role, counter, accessToken) => {
     data: {
       role,
       counter,
+      value,
     },
   };
 

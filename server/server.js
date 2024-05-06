@@ -67,12 +67,21 @@ app.post('/users', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received users request")
   const groupId = req.body.role
   const counter = req.body.counter
-  const query1 = "SELECT * FROM Users ORDER BY Email LIMIT 50 OFFSET " + counter + ";"
+  const value = req.body.value
+  let query1 = "SELECT * FROM Users"
+  if (value !== "") {
+    query1 += (" WHERE Email LIKE '" + value + "%'")
+  }
+  query1 += (" ORDER BY Email LIMIT 50 OFFSET " + counter + ";")
 
   try {
     const [users] = await connection.query(query1);
-    if (users.length === 0) {
+    if (users.length === 0 && counter !== 0) {
       res.status(404).send("No more users")
+      return
+    }
+    else if (users.length === 0 && counter === 0 && value !== "") {
+      res.status(404).send("No users with that name")
       return
     }
 
@@ -116,15 +125,26 @@ app.post('/addUser', checkJwt, async (req, res) => {
 app.post('/roles', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received roles request")
   const counter = req.body.counter;
+  const value = req.body.value;
   const { id, error } = await callUuidGenerator();
   if (id) {
-    const query = "SELECT * FROM UserGroups ORDER BY Name LIMIT 50 OFFSET " + counter + ";"
+    let query = "SELECT * FROM UserGroups"
+    if (value !== "") {
+      query += (" WHERE Name LIKE '" + value + "%'")
+    }
+    query += (" ORDER BY Name LIMIT 50 OFFSET " + counter + ";")
+
     try {
       const [results] = await connection.query(query);
-      if (results.length === 0) {
+      if (results.length === 0 && counter !== 0) {
         res.status(404).send("No more roles")
         return
       }
+      else if (results.length === 0 && counter === 0 && value !== "") {
+        res.status(404).send("No roles with that name")
+        return
+      }
+
       res.send(results)
       return
     } catch (err) {
@@ -223,9 +243,9 @@ app.post('/createRole', checkJwt, checkPermissions, async (req, res) => {
 app.post('/deleteRole', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received delete role request")
   const roleId = req.body.roleId
-  const query1 = "DELETE FROM UserGroups WHERE ID='" + roleId + "';"
-  const query2 = "DELETE FROM MachineUserGroups WHERE group_ID='" + roleId + "';"
-  const query3 = "DELETE FROM UserUserGroups WHERE group_ID='" + roleId + "';"
+  const query1 = "DELETE FROM MachineUserGroups WHERE group_ID='" + roleId + "';"
+  const query2 = "DELETE FROM UserUserGroups WHERE group_ID='" + roleId + "';"
+  const query3 = "DELETE FROM UserGroups WHERE ID='" + roleId + "';"
   try {
     await connection.query(query1);
     await connection.query(query2);
@@ -241,13 +261,23 @@ app.post('/deleteRole', checkJwt, checkPermissions, async (req, res) => {
 app.post('/machinesNormal', checkJwt, async (req, res) => {
   console.log("Received machines request")
   const counter = req.body.counter;
+  const value = req.body.value;
 
   if (req.auth.permissions.includes('manage:users')) {
-    const query = "SELECT * FROM Machines ORDER BY Name LIMIT 50 OFFSET " + counter + ";"
+    let query = "SELECT * FROM Machines"
+    if (value !== "") {
+      query += (" WHERE Name LIKE '" + value + "%'")
+    }
+    query += (" ORDER BY Name LIMIT 50 OFFSET " + counter + ";")
+
     try {
       const [machines] = await connection.query(query);
-      if (machines.length === 0) {
+      if (machines.length === 0 && counter !== 0) {
         res.status(404).send("No more machines")
+        return
+      }
+      else if (machines.length === 0 && counter === 0 && value !== "") {
+        res.status(404).send("No machines with that name")
         return
       }
       res.send(machines)
@@ -257,18 +287,24 @@ app.post('/machinesNormal', checkJwt, async (req, res) => {
     }
   }
   else {
-    const query =
-      "SELECT M.* FROM Machines M WHERE M.ID IN (" +
+    let query = "SELECT M.* FROM Machines M WHERE"
+    if (value !== "") {
+      query += (" M.Name LIKE '" + value + "%' AND")
+    }
+    query += (" M.ID IN (" +
       "SELECT JM.machine_ID from MachineUserGroups JM WHERE JM.group_ID IN (" +
-      "SELECT JU.group_ID FROM UserUserGroups JU WHERE JU.user_ID='" + req.auth.sub + "')) ORDER BY M.Name LIMIT 50 OFFSET " + counter + ";"
+      "SELECT JU.group_ID FROM UserUserGroups JU WHERE JU.user_ID='" + req.auth.sub + "')) ORDER BY M.Name LIMIT 50 OFFSET " + counter + ";")
 
     try {
       const [machines] = await connection.query(query);
-      if (machines.length === 0 && counter === 0) {
+      if (machines.length === 0 && counter === 0 && value === "") {
         res.status(403).send("You don't have access to any machine")
       }
       else if (machines.length === 0 && counter !== 0) {
         res.status(404).send("No more machines")
+      }
+      else if (machines.length === 0 && counter === 0 && value !== "") {
+        res.status(404).send("No machines with that name")
       }
       else {
         res.send(machines)
@@ -285,11 +321,21 @@ app.post('/machinesAdmin', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received machines admin request")
   const groupId = req.body.role
   const counter = req.body.counter
-  const query1 = "SELECT * FROM Machines ORDER BY Name LIMIT 50 OFFSET " + counter + ";"
+  const value = req.body.value
+  let query1 = "SELECT * FROM Machines"
+  if (value !== "") {
+    query1 += (" WHERE Name LIKE '" + value + "%'")
+  }
+  query1 += (" ORDER BY Name LIMIT 50 OFFSET " + counter + ";")
+
   try {
     const [machines] = await connection.query(query1);
-    if (machines.length === 0) {
+    if (machines.length === 0 && counter !== 0) {
       res.status(404).send("No more machines")
+      return
+    }
+    else if (machines.length === 0 && counter === 0 && value !== "") {
+      res.status(404).send("No machines with that name")
       return
     }
     for (let i = 0; i < machines.length; i++) {

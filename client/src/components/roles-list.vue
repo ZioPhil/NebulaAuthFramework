@@ -3,14 +3,20 @@
     <div class="roles__titlebar-grid">
       <div class="roles__titlebar-container">
         <h2 class="roles__title">{{ title }}</h2>
-        <button v-if="roles.length !== 0" class="button__add-role" @click="handleCreate()">
+        <button v-if="isAdmin" class="button__add-role" @click="handleCreate()">
           + Create Role
         </button>
       </div>
-      <div class="pagination" v-if="roles.length !== 0" :key="pagCounter">
-        <a @click="counterDown()">&laquo;</a>
-        <a class="central">{{pagCounter+1}}-{{roles.length + pagCounter}}</a>
-        <a @click="counterUp()">&raquo;</a>
+      <div class="exploration-bar" v-if="roles.length !== 0">
+        <div class="pagination" :key="pagCounter">
+          <a @click="counterDown()">&laquo;</a>
+          <a class="central">{{pagCounter+1}}-{{roles.length + pagCounter}}</a>
+          <a @click="counterUp()">&raquo;</a>
+        </div>
+        <div class="search-container">
+          <input type="text" placeholder="Search.." name="search" v-model="searchBox">
+          <button @click="handleSearch()">Submit</button>
+        </div>
       </div>
     </div>
     <div class="roles__grid" :key="roles">
@@ -59,8 +65,11 @@ const title = ref("");
 const pagCounter = ref(0);
 const isModalVisible = ref(false);
 const isCreateRoleModalVisible = ref(false);
+const isAdmin = ref(false);
 const isErrorModalVisible = ref(false);
 const error = ref("unknown");
+const searchBox = ref();
+const currentSearchValue = ref("")
 const currRole = ref();
 const { getAccessTokenSilently } = useAuth0();
 const router = useRouter();
@@ -78,11 +87,12 @@ const getRoleData = async (up) => {
     let customPagCounter = pagCounter.value
     if (up) customPagCounter += 50
 
-    const { data, error } = await getRoles(customPagCounter, token);
+    const { data, error } = await getRoles(customPagCounter, currentSearchValue.value, token);
 
     if (data) {
       roles.value = data;
       title.value = "Roles List";
+      isAdmin.value = true;
       return true
     }
 
@@ -90,7 +100,7 @@ const getRoleData = async (up) => {
       if (error.message === "Insufficient scope") {
         await showErrorModal("You are not an admin")
       }
-      else if (error.message === "No more users") {
+      else if (error.message === "No more roles") {
         return false
       }
       else {
@@ -168,6 +178,12 @@ const showErrorModal = async (err) => {
 
 const closeErrorModal = async () => {
   isErrorModalVisible.value = false;
+}
+
+const handleSearch = async () => {
+  currentSearchValue.value = searchBox.value
+  pagCounter.value = 0
+  await getRoleData(false)
 }
 
 getRoleData(false);

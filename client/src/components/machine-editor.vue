@@ -4,10 +4,16 @@
       <h2 class="machines-editor__title">
         Editing machines for {{ role.name }} role
       </h2>
-      <div class="pagination" v-if="machines.length !== 0" :key="pagCounter">
-        <a @click="counterDown()">&laquo;</a>
-        <a class="central">{{pagCounter+1}}-{{machines.length + pagCounter}}</a>
-        <a @click="counterUp()">&raquo;</a>
+      <div class="exploration-bar" v-if="machines.length !== 0">
+        <div class="pagination" :key="pagCounter">
+          <a @click="counterDown()">&laquo;</a>
+          <a class="central">{{pagCounter+1}}-{{machines.length + pagCounter}}</a>
+          <a @click="counterUp()">&raquo;</a>
+        </div>
+        <div class="search-container">
+          <input type="text" placeholder="Search.." name="search" v-model="searchBox">
+          <button @click="handleSearch()">Submit</button>
+        </div>
       </div>
     </div>
     <div class="machines-editor__grid" :key="machines">
@@ -48,6 +54,8 @@ const cards = ref(null);
 const pagCounter = ref(0);
 const isErrorModalVisible = ref(false);
 const error = ref("unknown");
+const searchBox = ref();
+const currentSearchValue = ref("")
 const { getAccessTokenSilently } = useAuth0();
 
 //request to the server to get all machines
@@ -63,7 +71,7 @@ const getMachs = async (up) => {
     let customPagCounter = pagCounter.value
     if (up) customPagCounter += 50
 
-    const { data, error } = await getMachinesAdmin(role.id, customPagCounter, token);
+    const { data, error } = await getMachinesAdmin(role.id, customPagCounter, currentSearchValue.value, token);
 
     if (data) {
       machines.value = data;
@@ -74,7 +82,7 @@ const getMachs = async (up) => {
       if (error.message === "Insufficient scope") {
         await showErrorModal("You are not an admin")
       }
-      else if (error.message === "No more users") {
+      else if (error.message === "No more machines") {
         return false
       }
       else await showErrorModal(error.message)
@@ -112,5 +120,11 @@ const errorHandling = async (error) => {
   await showErrorModal(error.message)
 }
 
-getMachs(true);
+const handleSearch = async () => {
+  currentSearchValue.value = searchBox.value
+  pagCounter.value = 0
+  await getMachs(false)
+}
+
+getMachs(false);
 </script>

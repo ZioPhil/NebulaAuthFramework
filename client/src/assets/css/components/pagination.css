@@ -1,3 +1,7 @@
+.exploration-bar {
+    position: relative;
+}
+
 .pagination {
     display: inline-block;
 }

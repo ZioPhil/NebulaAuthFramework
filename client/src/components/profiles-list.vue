@@ -4,10 +4,16 @@
       <h2 class="profiles__title">
         Editing users with {{ role.name }} role
       </h2>
-      <div class="pagination" v-if="users.length !== 0" :key="pagCounter">
-        <a @click="counterDown()">&laquo;</a>
-        <a class="central">{{pagCounter+1}}-{{users.length + pagCounter}}</a>
-        <a @click="counterUp()">&raquo;</a>
+      <div class="exploration-bar" v-if="users.length !== 0">
+        <div class="pagination" :key="pagCounter">
+          <a @click="counterDown()">&laquo;</a>
+          <a class="central">{{pagCounter+1}}-{{users.length + pagCounter}}</a>
+          <a @click="counterUp()">&raquo;</a>
+        </div>
+        <div class="search-container">
+          <input type="text" placeholder="Search.." name="search" v-model="searchBox">
+          <button @click="handleSearch()">Submit</button>
+        </div>
       </div>
     </div>
     <div class="profiles__grid" :key="users">
@@ -48,6 +54,8 @@ const cards = ref(null);
 const pagCounter = ref(0);
 const isErrorModalVisible = ref(false);
 const error = ref("unknown");
+const searchBox = ref();
+const currentSearchValue = ref("")
 const { getAccessTokenSilently } = useAuth0();
 
 //request to the server to get all users
@@ -63,7 +71,7 @@ const getUsrs = async (up) => {
     let customPagCounter = pagCounter.value
     if (up) customPagCounter += 50
 
-    const { data, error } = await getUsers(role.id, customPagCounter, token);
+    const { data, error } = await getUsers(role.id, customPagCounter, currentSearchValue.value, token);
 
     if (data) {
       users.value = data;
@@ -112,6 +120,12 @@ const closeErrorModal = async () => {
 
 const errorHandling = async (error) => {
   await showErrorModal(error.message)
+}
+
+const handleSearch = async () => {
+  currentSearchValue.value = searchBox.value
+  pagCounter.value = 0
+  await getUsrs(false)
 }
 
 getUsrs(false);

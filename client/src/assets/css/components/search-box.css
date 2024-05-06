@@ -1,0 +1,30 @@
+.search-container {
+    display: inline-block;
+    position: absolute;
+    right: 1.0rem;
+    font-size: 0;
+}
+
+.search-container input {
+    font-size: 15px;
+    line-height: 3.0rem;
+    outline-width: 0;
+}
+
+.search-container button {;
+    border: 0.1rem solid var(--indigo);
+    color: var(--white);
+    background: var(--indigo);
+    font-size: 1.3rem;
+
+    font-family: var(--font-primary);
+    font-style: normal;
+    font-weight: 600;
+    line-height: 3.1rem;
+    text-align: center;
+
+    cursor: pointer;
+    user-select: none;
+
+    transition: background 0.3s ease-out, color 0.3s ease-out;
+}
