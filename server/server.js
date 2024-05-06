@@ -76,16 +76,16 @@ app.post('/users', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received users request")
   const groupId = req.body.role
   const counter = req.body.counter
-  const value = req.body.value + "%"
+  const value = req.body.value
 
-  let inserts = []
   let query1 = "SELECT * FROM Users"
+  let inserts = []
   if (value !== "") {
     query1 += (" WHERE Email LIKE ?")
-    inserts.push(value)
+    inserts.push(value+"%")
   }
   query1 += (" ORDER BY Email LIMIT 50 OFFSET ?;")
-  inserts.push(counter)
+  inserts.push(counter) // using placeholder to prevent SQL Injection attack
 
   try {
     const [users] = await connection.query(query1, inserts);
@@ -99,8 +99,8 @@ app.post('/users', checkJwt, checkPermissions, async (req, res) => {
     }
 
     for (let i = 0; i < users.length; i++) {
-      const query2 = "SELECT * FROM UserUserGroups WHERE user_ID='" + users[i].ID + "' AND group_ID=?;"
-      let inserts = [groupId]
+      const query2 = "SELECT * FROM UserUserGroups WHERE user_ID=? AND group_ID=?;"
+      let inserts = [users[i].ID, groupId] // using placeholder to prevent SQL Injection attack
 
       const [results] = await connection.query(query2, inserts);
       users[i].hasRole = results.length !== 0;
@@ -117,17 +117,20 @@ app.post('/addUser', checkJwt, async (req, res) => {
   console.log("Received add user request")
   const userId = req.auth.sub
   //check if the user is already in the database, this is done to prevent the exploitation of this call
-  const query1 = "SELECT * FROM Users WHERE ID='" + userId + "';"
+  const query1 = "SELECT * FROM Users WHERE ID=?;"
+  let inserts = [userId] // using placeholder to prevent SQL Injection attack
+
   try {
-    const [results] = await connection.query(query1);
+    const [results] = await connection.query(query1, inserts);
     if (results.length !== 0) {
       res.status(409).send("The user already exists on DB")
     }
     else {
-      console.log(req)
       const email = req.body.email
-      const query2 = "INSERT INTO Users VALUES ('" + userId + "', '" + email + "');"
-      await connection.query(query2);
+      const query2 = "INSERT INTO Users VALUES (?, ?);"
+      let inserts = [userId, email] // using placeholder to prevent SQL Injection attack
+
+      await connection.query(query2, inserts);
       res.send(true)
     }
   } catch (err) {
@@ -144,13 +147,17 @@ app.post('/roles', checkJwt, checkPermissions, async (req, res) => {
   const { id, error } = await callUuidGenerator();
   if (id) {
     let query = "SELECT * FROM UserGroups"
+    let inserts = [] // using placeholder to prevent SQL Injection attack
+
     if (value !== "") {
-      query += (" WHERE Name LIKE '" + value + "%'")
+      query += (" WHERE Name LIKE ?")
+      inserts.push(value+"%")
     }
-    query += (" ORDER BY Name LIMIT 50 OFFSET " + counter + ";")
+    query += (" ORDER BY Name LIMIT 50 OFFSET ?;")
+    inserts.push(counter)
 
     try {
-      const [results] = await connection.query(query);
+      const [results] = await connection.query(query, inserts);
       if (results.length === 0 && counter !== 0) {
         res.status(404).send("No more roles")
         return
@@ -181,9 +188,11 @@ app.post('/updateRoleUsers', checkJwt, checkPermissions, async (req, res) => {
   const value = req.body.value
 
   if (value) {
-    const query = "INSERT INTO UserUserGroups VALUES ('" + roleId + "', '" + userId + "');"
+    const query = "INSERT INTO UserUserGroups VALUES (?, ?);"
+    let inserts = [roleId, userId] // using placeholder to prevent SQL Injection attack
+
     try {
-      await connection.query(query);
+      await connection.query(query, inserts);
       res.send(true)
     } catch (err) {
       console.log(err);
@@ -191,9 +200,11 @@ app.post('/updateRoleUsers', checkJwt, checkPermissions, async (req, res) => {
     }
   }
   else {
-    const query = "DELETE FROM UserUserGroups WHERE group_ID='" + roleId + "' AND user_ID='" + userId + "';"
+    const query = "DELETE FROM UserUserGroups WHERE group_ID=? AND user_ID=?;"
+    let inserts = [roleId, userId] // using placeholder to prevent SQL Injection attack
+
     try {
-      await connection.query(query);
+      await connection.query(query, inserts);
       res.send(true)
     } catch (err) {
       console.log(err);
@@ -210,9 +221,11 @@ app.post('/updateRoleMachines', checkJwt, checkPermissions, async (req, res) => 
   const value = req.body.value
 
   if (value) {
-    const query = "INSERT INTO MachineUserGroups VALUES ('" + machineId + "', '" + roleId + "');"
+    const query = "INSERT INTO MachineUserGroups VALUES (?, ?);"
+    let inserts = [machineId, roleId] // using placeholder to prevent SQL Injection attack
+
     try {
-      await connection.query(query);
+      await connection.query(query, inserts);
       res.send(true)
     } catch (err) {
       console.log(err);
@@ -220,9 +233,11 @@ app.post('/updateRoleMachines', checkJwt, checkPermissions, async (req, res) => 
     }
   }
   else {
-    const query = "DELETE FROM MachineUserGroups WHERE machine_ID='" + machineId + "' AND group_ID='" + roleId + "';"
+    const query = "DELETE FROM MachineUserGroups WHERE machine_ID=? AND group_ID=?;"
+    let inserts = [machineId, roleId] // using placeholder to prevent SQL Injection attack
+
     try {
-      await connection.query(query);
+      await connection.query(query, inserts);
       res.send(true)
     } catch (err) {
       console.log(err);
@@ -237,9 +252,11 @@ app.post('/createRole', checkJwt, checkPermissions, async (req, res) => {
   const roleName = req.body.name
   const { id, error } = await callUuidGenerator();
   if (id) {
-    const query = "INSERT INTO UserGroups VALUES ('" + id + "', '" + roleName + "');"
+    const query = "INSERT INTO UserGroups VALUES (?, ?);"
+    let inserts = [id, roleName] // using placeholder to prevent SQL Injection attack
+
     try {
-      await connection.query(query);
+      await connection.query(query, inserts);
       res.send(true)
       return
     } catch (err) {
@@ -258,13 +275,15 @@ app.post('/createRole', checkJwt, checkPermissions, async (req, res) => {
 app.post('/deleteRole', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received delete role request")
   const roleId = req.body.roleId
-  const query1 = "DELETE FROM MachineUserGroups WHERE group_ID='" + roleId + "';"
-  const query2 = "DELETE FROM UserUserGroups WHERE group_ID='" + roleId + "';"
-  const query3 = "DELETE FROM UserGroups WHERE ID='" + roleId + "';"
+  const query1 = "DELETE FROM MachineUserGroups WHERE group_ID=?;"
+  const query2 = "DELETE FROM UserUserGroups WHERE group_ID=?;"
+  const query3 = "DELETE FROM UserGroups WHERE ID=?;"
+  let inserts = [roleId] // using placeholder to prevent SQL Injection attack
+
   try {
-    await connection.query(query1);
-    await connection.query(query2);
-    await connection.query(query3);
+    await connection.query(query1, inserts);
+    await connection.query(query2, inserts);
+    await connection.query(query3, inserts);
     res.send(true)
   } catch (err) {
     console.log(err);
@@ -280,13 +299,16 @@ app.post('/machinesNormal', checkJwt, async (req, res) => {
 
   if (req.auth.permissions.includes('manage:users')) {
     let query = "SELECT * FROM Machines"
+    let inserts = [] // using placeholder to prevent SQL Injection attack
     if (value !== "") {
-      query += (" WHERE Name LIKE '" + value + "%'")
+      query += (" WHERE Name LIKE ?")
+      inserts.push(value+"%")
     }
-    query += (" ORDER BY Name LIMIT 50 OFFSET " + counter + ";")
+    query += (" ORDER BY Name LIMIT 50 OFFSET ?;")
+    inserts.push(counter)
 
     try {
-      const [machines] = await connection.query(query);
+      const [machines] = await connection.query(query, inserts);
       if (machines.length === 0 && counter !== 0) {
         res.status(404).send("No more machines")
         return
@@ -303,15 +325,18 @@ app.post('/machinesNormal', checkJwt, async (req, res) => {
   }
   else {
     let query = "SELECT M.* FROM Machines M WHERE"
+    let inserts = [] // using placeholder to prevent SQL Injection attack
     if (value !== "") {
-      query += (" M.Name LIKE '" + value + "%' AND")
+      query += (" M.Name LIKE ? AND")
+      inserts.push(value+"%")
     }
     query += (" M.ID IN (" +
       "SELECT JM.machine_ID from MachineUserGroups JM WHERE JM.group_ID IN (" +
-      "SELECT JU.group_ID FROM UserUserGroups JU WHERE JU.user_ID='" + req.auth.sub + "')) ORDER BY M.Name LIMIT 50 OFFSET " + counter + ";")
+      "SELECT JU.group_ID FROM UserUserGroups JU WHERE JU.user_ID=?)) ORDER BY M.Name LIMIT 50 OFFSET ?;")
+    inserts.push(req.auth.sub, counter)
 
     try {
-      const [machines] = await connection.query(query);
+      const [machines] = await connection.query(query, inserts);
       if (machines.length === 0 && counter === 0 && value === "") {
         res.status(403).send("You don't have access to any machine")
       }
@@ -338,13 +363,17 @@ app.post('/machinesAdmin', checkJwt, checkPermissions, async (req, res) => {
   const counter = req.body.counter
   const value = req.body.value
   let query1 = "SELECT * FROM Machines"
+  let inserts = [] // using placeholder to prevent SQL Injection attack
+
   if (value !== "") {
-    query1 += (" WHERE Name LIKE '" + value + "%'")
+    query1 += (" WHERE Name LIKE ?")
+    inserts.push(value+"%")
   }
-  query1 += (" ORDER BY Name LIMIT 50 OFFSET " + counter + ";")
+  query1 += (" ORDER BY Name LIMIT 50 OFFSET ?;")
+  inserts.push(counter)
 
   try {
-    const [machines] = await connection.query(query1);
+    const [machines] = await connection.query(query1, inserts);
     if (machines.length === 0 && counter !== 0) {
       res.status(404).send("No more machines")
       return
@@ -354,8 +383,10 @@ app.post('/machinesAdmin', checkJwt, checkPermissions, async (req, res) => {
       return
     }
     for (let i = 0; i < machines.length; i++) {
-      const query2 = "SELECT * FROM MachineUserGroups WHERE machine_ID='" + machines[i].ID + "' AND group_ID='" + groupId + "';"
-      const [results] = await connection.query(query2);
+      const query2 = "SELECT * FROM MachineUserGroups WHERE machine_ID=? AND group_ID=?;"
+      let inserts = [machines[i].ID, groupId] // using placeholder to prevent SQL Injection attack
+
+      const [results] = await connection.query(query2, inserts);
       machines[i].isAvailable = results.length !== 0;
     }
     res.send(machines)
@@ -376,11 +407,13 @@ app.post('/generateCertificate', checkJwt, async (req, res) => {
 
   // if the user is not an admin, check if he can access the machine
   if (!req.auth.permissions.includes('manage:users')) {
-    const query = "SELECT MA.* FROM Machines MA WHERE MA.ID='" + id + "' AND MA.Name='" + name + "' AND MA.ID IN (" +
-      "SELECT M.machine_ID FROM MachineUserGroups M WHERE M.machine_ID='" + id + "' AND M.group_ID IN (" +
-      "SELECT U.group_ID FROM UserUserGroups U WHERE U.user_ID='" + req.auth.sub + "'));"
+    const query = "SELECT MA.* FROM Machines MA WHERE MA.ID=? AND MA.Name=? AND MA.ID IN (" +
+      "SELECT M.machine_ID FROM MachineUserGroups M WHERE M.machine_ID=? AND M.group_ID IN (" +
+      "SELECT U.group_ID FROM UserUserGroups U WHERE U.user_ID=?));"
+    let inserts = [id, name, id, req.auth.sub] // using placeholder to prevent SQL Injection attack
+
     try {
-      const [results] = await connection.query(query);
+      const [results] = await connection.query(query, inserts);
       if (results.length === 0) {
         res.status(403).send("You can't access this machine")
         return
