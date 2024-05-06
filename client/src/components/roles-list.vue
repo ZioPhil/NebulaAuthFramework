@@ -14,7 +14,7 @@
           <a @click="counterUp()">&raquo;</a>
         </div>
         <div class="search-container">
-          <input type="text" placeholder="Search.." name="search" v-model="searchBox">
+          <input type="text" :placeholder="searchBoxPlaceholder" name="search" v-model="searchBox">
           <button @click="handleSearch()">Submit</button>
         </div>
       </div>
@@ -70,6 +70,7 @@ const isErrorModalVisible = ref(false);
 const error = ref("unknown");
 const searchBox = ref();
 const currentSearchValue = ref("")
+const searchBoxPlaceholder = ref("Search..")
 const currRole = ref();
 const { getAccessTokenSilently } = useAuth0();
 const router = useRouter();
@@ -101,6 +102,10 @@ const getRoleData = async (up) => {
         await showErrorModal("You are not an admin")
       }
       else if (error.message === "No more roles") {
+        return false
+      }
+      else if (error.message === "No roles with that name") {
+        await showErrorModal(error.message)
         return false
       }
       else {
@@ -181,9 +186,24 @@ const closeErrorModal = async () => {
 }
 
 const handleSearch = async () => {
+  const oldSearchValue = currentSearchValue.value
+  const oldPagCounter = pagCounter.value
   currentSearchValue.value = searchBox.value
   pagCounter.value = 0
-  await getRoleData(false)
+  searchBox.value = ""
+  if (!await getRoleData(false)) {
+    currentSearchValue.value = oldSearchValue
+    pagCounter.value = oldPagCounter
+  }
+  else {
+    if (currentSearchValue.value === "") {
+      searchBoxPlaceholder.value = "Search.."
+    }
+    else {
+      // TODO: make it more clear that you have to press button again to cancel search
+      searchBoxPlaceholder.value = "Current search: " + currentSearchValue.value
+    }
+  }
 }
 
 getRoleData(false);

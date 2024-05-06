@@ -9,7 +9,7 @@
           <a @click="counterUp()">&raquo;</a>
         </div>
         <div class="search-container">
-          <input type="text" placeholder="Search.." name="search" v-model="searchBox">
+          <input type="text" :placeholder="searchBoxPlaceholder" name="search" v-model="searchBox">
           <button @click="handleSearch()">Submit</button>
         </div>
       </div>
@@ -44,6 +44,7 @@ const isErrorModalVisible = ref(false);
 const error = ref("unknown");
 const searchBox = ref();
 const currentSearchValue = ref("")
+const searchBoxPlaceholder = ref("Search..")
 const { getAccessTokenSilently } = useAuth0();
 
 // get all the machines available to the user from the server
@@ -68,6 +69,10 @@ const getMachs = async (up) => {
 
     if (error) {
       if (error.message === "No more machines") {
+        return false
+      }
+      else if (error.message === "No machines with that name") {
+        await showErrorModal(error.message)
         return false
       }
       else await showErrorModal(error.message)
@@ -102,9 +107,24 @@ const counterUp = async () => {
 }
 
 const handleSearch = async () => {
+  const oldSearchValue = currentSearchValue.value
+  const oldPagCounter = pagCounter.value
   currentSearchValue.value = searchBox.value
   pagCounter.value = 0
-  await getMachs(false)
+  searchBox.value = ""
+  if (!await getMachs(false)) {
+    currentSearchValue.value = oldSearchValue
+    pagCounter.value = oldPagCounter
+  }
+  else {
+    if (currentSearchValue.value === "") {
+      searchBoxPlaceholder.value = "Search.."
+    }
+    else {
+      // TODO: make it more clear that you have to press button again to cancel search
+      searchBoxPlaceholder.value = "Current search: " + currentSearchValue.value
+    }
+  }
 }
 
 getMachs(false);

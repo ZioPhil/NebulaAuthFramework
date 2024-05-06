@@ -9,6 +9,7 @@ const { expressjwt: jwt } = require("express-jwt");
 const mysql = require('mysql2/promise');
 
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const app = express();
@@ -16,6 +17,14 @@ const port = 8000;
 let connection;
 
 const nebulaApiServerUrl = process.env.VITE_NEBULA_API_ADDRESS;
+
+// TODO: limiter response doesn't get handled well on client
+// set rate limit for requests to prevent DoS attacks
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 100, // max 100 requests per windowMs
+});
+app.use(limiter); // apply limiter to all requests
 
 app.use(bodyParser.json());
 app.use(cors());
