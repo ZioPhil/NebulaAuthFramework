@@ -4,6 +4,7 @@ import { createRouter, createWebHistory } from "vue-router";
 
 const NotFoundPage = () => import("@/pages/not-found-page.vue");
 const ProtectedPage = () => import("@/pages/protected-page.vue");
+const AfterSignupPage = () => import("@/pages/after-signup-page.vue")
 const AdminPage = () => import("@/pages/admin-page.vue");
 const CallbackPage = () => import("@/pages/callback-page.vue");
 const SetMachinesPage = () => import("@/pages/set-machines-page.vue");
@@ -20,6 +21,12 @@ const routes = [
     path: "/protected",
     name: "protected",
     component: ProtectedPage,
+    beforeEnter: authGuard, // can access this page only if authenticated
+  },
+  {
+    path: "/userCreation",
+    name: "userCreation",
+    component: AfterSignupPage,
     beforeEnter: authGuard, // can access this page only if authenticated
   },
   {
@@ -43,7 +50,7 @@ const routes = [
     props: true,
   },
   {
-    path: "/connect/:machineName",
+    path: "/connect/:machineId:machineName",
     name: "connectToMachine",
     component: MachineConnectionPage,
     beforeEnter: authGuard, // can access this page only if authenticated

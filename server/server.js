@@ -2,19 +2,29 @@ require('dotenv').config();
 
 const fileupload = require("express-fileupload");
 const callExternalApi = require("./external-api.service")
-const FileSystem = require("fs");
+const callUuidGenerator = require("./uuid-generation")
 const jwksRsa = require("jwks-rsa");
 const jwtAuthz = require('express-jwt-authz');
 const { expressjwt: jwt } = require("express-jwt");
-const ManagementClient = require('auth0').ManagementClient;
+const mysql = require('mysql2/promise');
 
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const app = express();
 const port = 8000;
+let connection;
 
 const nebulaApiServerUrl = process.env.VITE_NEBULA_API_ADDRESS;
+
+// TODO: limiter response doesn't get handled well on client
+// set rate limit for requests to prevent DoS attacks
+const limiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 100, // max 100 requests per windowMs
+});
+app.use(limiter); // apply limiter to all requests
 
 app.use(bodyParser.json());
 app.use(cors());
@@ -25,15 +35,7 @@ app.use(fileupload());
 const authConfig = {
   domain: process.env.VITE_AUTH0_DOMAIN,
   audience: process.env.VITE_AUTH0_AUDIENCE,
-  clientId: process.env.VITE_CLIENT_ID,
-  clientSecret: process.env.VITE_CLIENT_SECRET
 };
-
-const managementAPI = new ManagementClient({
-  domain: authConfig.domain,
-  clientId: authConfig.clientId,
-  clientSecret: authConfig.clientSecret
-});
 
 // JSON Web Token validation
 const checkJwt = jwt({
@@ -53,92 +55,161 @@ const checkJwt = jwt({
 // Admin permission validation
 const checkPermissions = jwtAuthz([ "manage:users" ], { customScopeKey: "permissions", customUserKey: 'auth' });
 
+// Connect to DB and start server
+async function startServer(){
+  connection = await mysql.createConnection({
+    host: process.env.VITE_DB_ADDRESS,
+    user: process.env.VITE_DB_USER,
+    password: process.env.VITE_DB_PASSWORD,
+    database: 'srs',
+    port: process.env.VITE_DB_PORT,
+  });
+  console.log("Connected to MySQL database")
+  app.listen(port)
+  console.log("Server listening on port " + port)
+}
+
 // TODO: add logs
-// TODO: temporary custom data, implement nebula network connection
-let machines = require('./machines_db')
 
 // get all users
 app.post('/users', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received users request")
-  const roleId = req.body.role
+  const groupId = req.body.role
+  const counter = req.body.counter
+  const value = req.body.value
 
-  await managementAPI.users.getAll()
-    .then(async function(users) {
-      for (let i = 0; i < users.data.length; i++) {
-        await managementAPI.users.getRoles({id: users.data[i].user_id})
-          .then(function(roles) {
-            let roleIdList = []
-            for (let j = 0; j < roles.data.length; j++) {
-              roleIdList.push(roles.data[j].id)
-            }
+  let query1 = "SELECT * FROM Users"
+  let inserts = []
+  if (value !== "") {
+    query1 += (" WHERE Email LIKE ?")
+    inserts.push(value+"%")
+  }
+  query1 += (" ORDER BY Email LIMIT 50 OFFSET ?;")
+  inserts.push(counter) // using placeholder to prevent SQL Injection attack
 
-            // remove admins from list
-            if (roleIdList.includes(process.env.VITE_AUTH0_ADMIN_ROLE_ID)) {
-              users.data.splice(i, 1);
-              i--;
-            }
-            //check if user has role
-            else users.data[i].hasRole = roleIdList.includes(roleId);
-          })
-      }
-      res.send(users.data);
-    }).catch(function(err) {
-      console.log(err);
-    });
+  try {
+    const [users] = await connection.query(query1, inserts);
+    if (users.length === 0 && counter !== 0) {
+      res.status(404).send("No more users")
+      return
+    }
+    else if (users.length === 0 && counter === 0 && value !== "") {
+      res.status(404).send("No users with that name")
+      return
+    }
+
+    for (let i = 0; i < users.length; i++) {
+      const query2 = "SELECT * FROM UserUserGroups WHERE user_ID=? AND group_ID=?;"
+      let inserts = [users[i].ID, groupId] // using placeholder to prevent SQL Injection attack
+
+      const [results] = await connection.query(query2, inserts);
+      users[i].hasRole = results.length !== 0;
+    }
+    res.send(users)
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Error while fetching users on server")
+  }
+});
+
+//add new user to database
+app.post('/addUser', checkJwt, async (req, res) => {
+  console.log("Received add user request")
+  const userId = req.auth.sub
+  //check if the user is already in the database, this is done to prevent the exploitation of this call
+  const query1 = "SELECT * FROM Users WHERE ID=?;"
+  let inserts = [userId] // using placeholder to prevent SQL Injection attack
+
+  try {
+    const [results] = await connection.query(query1, inserts);
+    if (results.length !== 0) {
+      res.status(409).send("The user already exists on DB")
+    }
+    else {
+      const email = req.body.email
+      const query2 = "INSERT INTO Users VALUES (?, ?);"
+      let inserts = [userId, email] // using placeholder to prevent SQL Injection attack
+
+      await connection.query(query2, inserts);
+      res.send(true)
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Error while adding user to DB on server")
+  }
 });
 
 //get all roles
-app.get('/roles', checkJwt, checkPermissions, (req, res) => {
+app.post('/roles', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received roles request")
+  const counter = req.body.counter;
+  const value = req.body.value;
+  const { id, error } = await callUuidGenerator();
+  if (id) {
+    let query = "SELECT * FROM UserGroups"
+    let inserts = [] // using placeholder to prevent SQL Injection attack
 
-  managementAPI.roles.getAll()
-    .then(function(roles) {
-      // remove srs_admin role from final result
-      for(let i = 0; i < roles.data.length; i++) {
-        if(roles.data[i].id === process.env.VITE_AUTH0_ADMIN_ROLE_ID) {
-          roles.data.splice(i, 1);
-          break;
-        }
+    if (value !== "") {
+      query += (" WHERE Name LIKE ?")
+      inserts.push(value+"%")
+    }
+    query += (" ORDER BY Name LIMIT 50 OFFSET ?;")
+    inserts.push(counter)
+
+    try {
+      const [results] = await connection.query(query, inserts);
+      if (results.length === 0 && counter !== 0) {
+        res.status(404).send("No more roles")
+        return
+      }
+      else if (results.length === 0 && counter === 0 && value !== "") {
+        res.status(404).send("No roles with that name")
+        return
       }
 
-      res.send(roles.data);
-    }).catch(function(err) {
+      res.send(results)
+      return
+    } catch (err) {
       console.log(err);
-    });
+      res.status(500).send("Error while adding role to DB on server")
+      return
+    }
+  }
+  if (error) {
+    res.status(500).send("Error while generating uuid for role")
+  }
 });
 
 // update users for role
-app.post('/updateRoleUsers', checkJwt, checkPermissions, (req, res) => {
+app.post('/updateRoleUsers', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received update role users request")
   const roleId = req.body.roleId
   const userId = req.body.userId
   const value = req.body.value
 
   if (value) {
-    managementAPI.users.assignRoles({ id: userId }, { roles: [roleId] })
-      .then(function(response) {
-        if (response.status === 204) {
-          res.send(true);
-        }
-        else {
-          res.send(false);
-        }
-      }).catch(function(err) {
+    const query = "INSERT INTO UserUserGroups VALUES (?, ?);"
+    let inserts = [roleId, userId] // using placeholder to prevent SQL Injection attack
+
+    try {
+      await connection.query(query, inserts);
+      res.send(true)
+    } catch (err) {
       console.log(err);
-    });
+      res.status(500).send("Error while adding user to group to DB on server")
+    }
   }
   else {
-    managementAPI.users.deleteRoles({ id: userId }, { roles: [roleId] })
-      .then(function(response) {
-        if (response.status === 204) {
-          res.send(true);
-        }
-        else {
-          res.send(false);
-        }
-      }).catch(function(err) {
+    const query = "DELETE FROM UserUserGroups WHERE group_ID=? AND user_ID=?;"
+    let inserts = [roleId, userId] // using placeholder to prevent SQL Injection attack
+
+    try {
+      await connection.query(query, inserts);
+      res.send(true)
+    } catch (err) {
       console.log(err);
-    });
+      res.status(500).send("Error while removing user from group from DB on server")
+    }
   }
 });
 
@@ -148,191 +219,235 @@ app.post('/updateRoleMachines', checkJwt, checkPermissions, async (req, res) => 
   const roleId = req.body.roleId
   const machineId = req.body.machineId
   const value = req.body.value
-  let found = false
 
-  try {
-    if (value) {
-      for (let i = 0; i < machines.length; i++) {
-        if (machines[i].id === machineId) {
-          found = true//check if user has role
-          machines[i].roles.push(roleId)
+  if (value) {
+    const query = "INSERT INTO MachineUserGroups VALUES (?, ?);"
+    let inserts = [machineId, roleId] // using placeholder to prevent SQL Injection attack
 
-          await FileSystem.writeFile('machines_db.json', JSON.stringify(machines), (error) => {
-            if (error) res.status(500).send("Error while saving machines configuration");
-          });
-
-          res.send(true)
-        }
-      }
-      if (!found) res.send(false)
-    } else {
-      for (let i = 0; i < machines.length; i++) {
-        if (machines[i].id === machineId) {
-          found = true
-          machines[i].roles.splice(machines[i].roles.indexOf(roleId), 1);
-
-          await FileSystem.writeFile('machines_db.json', JSON.stringify(machines), (error) => {
-            if (error) res.status(500).send("Error while saving machines configuration");
-          });
-
-          res.send(true)
-        }
-      }
-      if (!found) res.send(false)
+    try {
+      await connection.query(query, inserts);
+      res.send(true)
+    } catch (err) {
+      console.log(err);
+      res.status(500).send("Error while adding machine to group to DB on server")
     }
-  } catch (err) {
-    console.log(err)
-    res.status(500).send("Error while saving machines configuration");
+  }
+  else {
+    const query = "DELETE FROM MachineUserGroups WHERE machine_ID=? AND group_ID=?;"
+    let inserts = [machineId, roleId] // using placeholder to prevent SQL Injection attack
+
+    try {
+      await connection.query(query, inserts);
+      res.send(true)
+    } catch (err) {
+      console.log(err);
+      res.status(500).send("Error while removing machine from group from DB on server")
+    }
   }
 });
 
 // create new role
-app.post('/createRole', checkJwt, checkPermissions, (req, res) => {
+app.post('/createRole', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received create role request")
   const roleName = req.body.name
+  const { id, error } = await callUuidGenerator();
+  if (id) {
+    const query = "INSERT INTO UserGroups VALUES (?, ?);"
+    let inserts = [id, roleName] // using placeholder to prevent SQL Injection attack
 
-  managementAPI.roles.create({ name: roleName })
-    .then(function(response) {
-      if (response.status === 200){
-        res.send(true)
-      }
-      else {
-        res.send(false)
-      }
-    }).catch(function(err) {
-    console.log(err);
-  });
+    try {
+      await connection.query(query, inserts);
+      res.send(true)
+      return
+    } catch (err) {
+      console.log(err);
+      res.status(500).send("Error while adding role to DB on server")
+      return
+    }
+  }
+  if (error) {
+    console.log(error)
+    res.status(500).send("Error while generating uuid for role on server")
+  }
 });
 
 // delete role
-app.post('/deleteRole', checkJwt, checkPermissions, (req, res) => {
+app.post('/deleteRole', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received delete role request")
+  const roleId = req.body.roleId
+  const query1 = "DELETE FROM MachineUserGroups WHERE group_ID=?;"
+  const query2 = "DELETE FROM UserUserGroups WHERE group_ID=?;"
+  const query3 = "DELETE FROM UserGroups WHERE ID=?;"
+  let inserts = [roleId] // using placeholder to prevent SQL Injection attack
 
-  if (req.body.roleId !== process.env.VITE_AUTH0_ADMIN_ROLE_ID) {
-    managementAPI.roles.delete({ id: req.body.roleId })
-      .then(function(response) {
-        if (response.status === 200) {
-          res.send(true);
-        }
-        else {
-          res.send(false);
-        }
-      }).catch(function(err) {
-      console.log(err);
-    });
+  try {
+    await connection.query(query1, inserts);
+    await connection.query(query2, inserts);
+    await connection.query(query3, inserts);
+    res.send(true)
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Error while removing role from DB on server")
   }
-  else res.status(403).send("Can't remove admin role")
 });
 
 // get machines available to the user
-app.get('/machinesNormal', checkJwt, async (req, res) => {
+app.post('/machinesNormal', checkJwt, async (req, res) => {
   console.log("Received machines request")
+  const counter = req.body.counter;
+  const value = req.body.value;
 
   if (req.auth.permissions.includes('manage:users')) {
-    res.send(machines);
+    let query = "SELECT * FROM Machines"
+    let inserts = [] // using placeholder to prevent SQL Injection attack
+    if (value !== "") {
+      query += (" WHERE Name LIKE ?")
+      inserts.push(value+"%")
+    }
+    query += (" ORDER BY Name LIMIT 50 OFFSET ?;")
+    inserts.push(counter)
+
+    try {
+      const [machines] = await connection.query(query, inserts);
+      if (machines.length === 0 && counter !== 0) {
+        res.status(404).send("No more machines")
+        return
+      }
+      else if (machines.length === 0 && counter === 0 && value !== "") {
+        res.status(404).send("No machines with that name")
+        return
+      }
+      res.send(machines)
+    } catch (err) {
+      console.log(err);
+      res.status(500).send("Error while fetching machines from DB on server")
+    }
   }
   else {
-    let roleIdList = []
-    let customList = []
+    let query = "SELECT M.* FROM Machines M WHERE"
+    let inserts = [] // using placeholder to prevent SQL Injection attack
+    if (value !== "") {
+      query += (" M.Name LIKE ? AND")
+      inserts.push(value+"%")
+    }
+    query += (" M.ID IN (" +
+      "SELECT JM.machine_ID from MachineUserGroups JM WHERE JM.group_ID IN (" +
+      "SELECT JU.group_ID FROM UserUserGroups JU WHERE JU.user_ID=?)) ORDER BY M.Name LIMIT 50 OFFSET ?;")
+    inserts.push(req.auth.sub, counter)
 
-    await managementAPI.users.getRoles({ id: req.auth.sub })
-      .then(function(roles) {
-        for (let i = 0; i < roles.data.length; i++) {
-          roleIdList.push(roles.data[i].id)
-        }
-        for (let i = 0; i < machines.length; i++) {
-          for (let j = 0; j < machines[i].roles.length; j++) {
-            if (roleIdList.includes(machines[i].roles[j])) {
-              customList.push(machines[i])
-              break
-            }
-          }
-        }
-        res.send(customList)
-      }).catch(function(err) {
-        console.log(err);
-        res.status(500).send(err)
-      });
+    try {
+      const [machines] = await connection.query(query, inserts);
+      if (machines.length === 0 && counter === 0 && value === "") {
+        res.status(403).send("You don't have access to any machine")
+      }
+      else if (machines.length === 0 && counter !== 0) {
+        res.status(404).send("No more machines")
+      }
+      else if (machines.length === 0 && counter === 0 && value !== "") {
+        res.status(404).send("No machines with that name")
+      }
+      else {
+        res.send(machines)
+      }
+    } catch (err) {
+      console.log(err);
+      res.status(500).send("Error while fetching machines from DB on server")
+    }
   }
 });
 
 // get all machines
-app.post('/machinesAdmin', checkJwt, checkPermissions, (req, res) => {
+app.post('/machinesAdmin', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received machines admin request")
-  const roleId = req.body.role
+  const groupId = req.body.role
+  const counter = req.body.counter
+  const value = req.body.value
+  let query1 = "SELECT * FROM Machines"
+  let inserts = [] // using placeholder to prevent SQL Injection attack
 
-  for (let i = 0; i < machines.length; i++) {
-    machines[i].isAvailable = machines[i].roles.includes(roleId);
+  if (value !== "") {
+    query1 += (" WHERE Name LIKE ?")
+    inserts.push(value+"%")
   }
+  query1 += (" ORDER BY Name LIMIT 50 OFFSET ?;")
+  inserts.push(counter)
 
-  res.send(machines);
+  try {
+    const [machines] = await connection.query(query1, inserts);
+    if (machines.length === 0 && counter !== 0) {
+      res.status(404).send("No more machines")
+      return
+    }
+    else if (machines.length === 0 && counter === 0 && value !== "") {
+      res.status(404).send("No machines with that name")
+      return
+    }
+    for (let i = 0; i < machines.length; i++) {
+      const query2 = "SELECT * FROM MachineUserGroups WHERE machine_ID=? AND group_ID=?;"
+      let inserts = [machines[i].ID, groupId] // using placeholder to prevent SQL Injection attack
+
+      const [results] = await connection.query(query2, inserts);
+      machines[i].isAvailable = results.length !== 0;
+    }
+    res.send(machines)
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Error while fetching machines from DB on server")
+  }
 });
 
 // generate certificate for a given machine
 app.post('/generateCertificate', checkJwt, async (req, res) => {
   console.log("Received certificate generation request")
   const key = req.body.key
+  const id = req.body.id
   const name = req.body.name
   const ip_address = req.body.ip_address
   const groups = req.body.groups
-  let found = false
 
-  // check if the user can access the machine
-  let roleIdList = []
-  await managementAPI.users.getRoles({ id: req.auth.sub })
-    .then(async function(roles) {
-      for (let i = 0; i < roles.data.length; i++) {
-        roleIdList.push(roles.data[i].id)
-      }
+  // if the user is not an admin, check if he can access the machine
+  if (!req.auth.permissions.includes('manage:users')) {
+    const query = "SELECT MA.* FROM Machines MA WHERE MA.ID=? AND MA.Name=? AND MA.ID IN (" +
+      "SELECT M.machine_ID FROM MachineUserGroups M WHERE M.machine_ID=? AND M.group_ID IN (" +
+      "SELECT U.group_ID FROM UserUserGroups U WHERE U.user_ID=?));"
+    let inserts = [id, name, id, req.auth.sub] // using placeholder to prevent SQL Injection attack
 
-      if (roleIdList.includes(process.env.VITE_AUTH0_ADMIN_ROLE_ID)) {
-        found = true // the user is an admin
+    try {
+      const [results] = await connection.query(query, inserts);
+      if (results.length === 0) {
+        res.status(403).send("You can't access this machine")
+        return
       }
-      else {
-        for (let i = 0; i < machines.length; i++) {
-          if (machines[i].name === name) {
-            for (let j = 0; j < machines[i].roles.length; j++) {
-              if (roleIdList.includes(machines[i].roles[j])) {
-                found = true
-                break
-              }
-            }
-          }
-          if (found) break
-        }
-      }
-    }).catch(function(err) {
+    } catch (err) {
       console.log(err);
-      res.status(500).send(err)
-    });
-
-  if (found) {
-    const formData = new FormData();
-    formData.append("key", key);
-    formData.append("name", name);
-    formData.append("ip_address", ip_address);
-    formData.append("groups", groups);
-
-    const config = {
-      url: `${nebulaApiServerUrl}/generate_certificate`,
-      method: "POST",
-      headers: {
-        "content-type": "multipart/form-data",
-      },
-      data: formData,
-    };
-
-    const { data, error } = await callExternalApi({ config });
-
-    if (data) {
-      res.send(data)
-    }
-    if (error) {
-      res.status(500).send(error.message)
+      res.status(500).send("Error while reading DB on server")
+      return
     }
   }
-  else {
-    res.status(403).send("You can't access this machine")
+
+  const formData = new FormData();
+  formData.append("key", key);
+  formData.append("name", name);
+  formData.append("ip_address", ip_address);
+  formData.append("groups", groups);
+
+  const config = {
+    url: `${nebulaApiServerUrl}/generate_certificate`,
+    method: "POST",
+    headers: {
+      "content-type": "multipart/form-data",
+    },
+    data: formData,
+  };
+
+  const { data, error } = await callExternalApi({ config });
+
+  if (data) {
+    res.send(data)
+    return
+  }
+  if (error) {
+    res.status(500).send("Error while generating certificate")
   }
 })
 
@@ -341,4 +456,4 @@ app.get('/', (req, res) => {
   res.send(`Server listening on port ${port}`)
 });
 
-app.listen(port);
+startServer();

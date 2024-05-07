@@ -10,7 +10,7 @@ const { loginWithRedirect } = useAuth0();
 const handleSignUp = () => {
   loginWithRedirect({
     appState: {
-      target: "/protected", // after the user signs up and is redirected to the callback page, take it to the machines page
+      target: "/userCreation", // after the user signs up and is redirected to the callback page, take it to the userCreation page
     },
     authorizationParams: {
       screen_hint: "signup",

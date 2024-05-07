@@ -1,0 +1,20 @@
+.exploration-bar {
+    position: relative;
+}
+
+.pagination {
+    display: inline-block;
+}
+
+.pagination a {
+    color: white;
+    float: left;
+    padding: 8px 16px;
+    text-decoration: none;
+    font-size: 1.6rem;
+}
+
+.pagination a:hover:not(.central) {
+    background-color: var(--indigo);
+    border-radius: 5px;
+}

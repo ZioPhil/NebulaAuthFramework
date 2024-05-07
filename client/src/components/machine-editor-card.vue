@@ -16,6 +16,7 @@ import { updateRoleMachines } from "@/services/machine.service";
 import { ref } from "vue";
 import { useAuth0 } from "@auth0/auth0-vue";
 const { getAccessTokenSilently } = useAuth0();
+const emit = defineEmits(['error'])
 
 const machine = defineProps({
   id: String,
@@ -39,18 +40,18 @@ const handleClick = async () => {
     roleValue.value = !roleValue.value
     const { data, error } = await updateRoleMachines(machine.roleId, machine.id, roleValue.value, token);
 
-    if (data === true) {
+    if (data) {
 
-    }
-    else {
-      console.log("Error in role update")
     }
 
     if (error) {
-      console.error(error);
+      if (error.message === "Insufficient scope") {
+        emit('error', 'You are not an admin')
+      }
+      else emit('error', error)
     }
   } catch (e) {
-    console.error(e);
+    emit('error', e)
   }
 };
 

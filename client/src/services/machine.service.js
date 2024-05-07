@@ -2,46 +2,7 @@ import { callExternalApi } from "./external-api.service";
 
 const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
 // requests to the server made with axios
-export const getMachinesNormal = async (accessToken) => {
-  const config = {
-    url: `${apiServerUrl}/machinesNormal`,
-    method: "GET",
-    headers: {
-      "content-type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-  };
-
-  const { data, error } = await callExternalApi({ config });
-
-  return {
-    data: data || null,
-    error,
-  };
-};
-
-export const getMachinesAdmin = async (role, accessToken) => {
-  const config = {
-    url: `${apiServerUrl}/machinesAdmin`,
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    data: {
-      role,
-    },
-  };
-
-  const { data, error } = await callExternalApi({ config });
-
-  return {
-    data: data || null,
-    error,
-  };
-};
-
-export const getUsers = async (role, accessToken) => {
+export const getUsers = async (role, counter, value, accessToken) => {
   const config = {
     url: `${apiServerUrl}/users`,
     method: "POST",
@@ -51,6 +12,8 @@ export const getUsers = async (role, accessToken) => {
     },
     data: {
       role,
+      counter,
+      value,
     },
   };
 
@@ -62,13 +25,38 @@ export const getUsers = async (role, accessToken) => {
   };
 };
 
-export const getRoles = async (accessToken) => {
+export const addUser = async (email, accessToken) => {
   const config = {
-    url: `${apiServerUrl}/roles`,
-    method: "GET",
+    url: `${apiServerUrl}/addUser`,
+    method: "POST",
     headers: {
       "content-type": "application/json",
       Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      email,
+    },
+  };
+
+  const { data, error } = await callExternalApi({ config });
+
+  return {
+    data: data || null,
+    error,
+  };
+};
+
+export const getRoles = async (counter, value, accessToken) => {
+  const config = {
+    url: `${apiServerUrl}/roles`,
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      counter,
+      value,
     },
   };
 
@@ -168,9 +156,55 @@ export const deleteRole = async (roleId, accessToken) => {
   };
 };
 
-export const generateCertificate = async (pubKey, name, ip_address, accessToken) => {
+export const getMachinesNormal = async (counter, value, accessToken) => {
+  const config = {
+    url: `${apiServerUrl}/machinesNormal`,
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      counter,
+      value,
+    },
+  };
+
+  const { data, error } = await callExternalApi({ config });
+
+  return {
+    data: data || null,
+    error,
+  };
+};
+
+export const getMachinesAdmin = async (role, counter, value, accessToken) => {
+  const config = {
+    url: `${apiServerUrl}/machinesAdmin`,
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    data: {
+      role,
+      counter,
+      value,
+    },
+  };
+
+  const { data, error } = await callExternalApi({ config });
+
+  return {
+    data: data || null,
+    error,
+  };
+};
+
+export const generateCertificate = async (pubKey, id, name, ip_address, accessToken) => {
   const formData = new FormData();
   formData.append("key", pubKey);
+  formData.append("id", id);
   formData.append("name", name);
   formData.append("ip_address", ip_address);
   formData.append("groups", name);

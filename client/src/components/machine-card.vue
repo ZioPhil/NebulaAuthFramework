@@ -2,7 +2,7 @@
   <router-link
     :to="{
       name: 'connectToMachine',
-      params: { machineName: machine.name },
+      params: { machineId: machine.id, machineName: machine.name },
     }"
     class="machine"
   >
@@ -14,6 +14,7 @@
 
 <script setup>
 const machine = defineProps({
+  id: String,
   name: String,
 });
 </script>

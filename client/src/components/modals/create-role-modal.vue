@@ -31,19 +31,19 @@ export default {
 
           const { data, error } = await createRole(this.$refs.roleNameText.value, token);
 
-          if (data === true) {
+          if (data) {
             this.$refs.roleNameText.value = ""
             this.$emit("reload");
           }
-          else {
-            console.log("Error while creating role on server")
-          }
 
           if (error) {
-            console.error(error);
+            if (error.message === "Insufficient scope") {
+              this.$emit('error', 'You are not an admin')
+            }
+            else this.$emit("error", error)
           }
         } catch (e) {
-          console.error(e);
+          this.$emit("error", e)
         }
       }
     },
