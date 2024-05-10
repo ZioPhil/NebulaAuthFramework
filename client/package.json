@@ -13,7 +13,6 @@
     "@auth0/auth0-vue": "^2.3.3",
     "axios": "^1.6.8",
     "is-ip": "^5.0.1",
-    "npm-check-updates": "^16.14.20",
     "vue": "^3.2.36",
     "vue-router": "^4.0.15"
   },
