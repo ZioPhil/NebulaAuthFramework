@@ -4,7 +4,7 @@ const apiServerUrl = import.meta.env.VITE_API_SERVER_URL;
 // requests to the server made with axios
 export const getMachinesNormal = async (accessToken) => {
   const config = {
-    url: `${apiServerUrl}/machinesNormal`,
+    url: `${apiServerUrl}/server/machinesNormal`,
     method: "GET",
     headers: {
       "content-type": "application/json",
@@ -22,7 +22,7 @@ export const getMachinesNormal = async (accessToken) => {
 
 export const getMachinesAdmin = async (role, accessToken) => {
   const config = {
-    url: `${apiServerUrl}/machinesAdmin`,
+    url: `${apiServerUrl}/server/machinesAdmin`,
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -43,7 +43,7 @@ export const getMachinesAdmin = async (role, accessToken) => {
 
 export const getUsers = async (role, accessToken) => {
   const config = {
-    url: `${apiServerUrl}/users`,
+    url: `${apiServerUrl}/server/users`,
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -64,7 +64,7 @@ export const getUsers = async (role, accessToken) => {
 
 export const getRoles = async (accessToken) => {
   const config = {
-    url: `${apiServerUrl}/roles`,
+    url: `${apiServerUrl}/server/roles`,
     method: "GET",
     headers: {
       "content-type": "application/json",
@@ -82,7 +82,7 @@ export const getRoles = async (accessToken) => {
 
 export const updateRoleUsers = async (roleId, userId, value, accessToken) => {
   const config = {
-    url: `${apiServerUrl}/updateRoleUsers`,
+    url: `${apiServerUrl}/server/updateRoleUsers`,
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -105,7 +105,7 @@ export const updateRoleUsers = async (roleId, userId, value, accessToken) => {
 
 export const updateRoleMachines = async (roleId, machineId, value, accessToken) => {
   const config = {
-    url: `${apiServerUrl}/updateRoleMachines`,
+    url: `${apiServerUrl}/server/updateRoleMachines`,
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -128,7 +128,7 @@ export const updateRoleMachines = async (roleId, machineId, value, accessToken) 
 
 export const createRole = async (name, accessToken) => {
   const config = {
-    url: `${apiServerUrl}/createRole`,
+    url: `${apiServerUrl}/server/createRole`,
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -149,7 +149,7 @@ export const createRole = async (name, accessToken) => {
 
 export const deleteRole = async (roleId, accessToken) => {
   const config = {
-    url: `${apiServerUrl}/deleteRole`,
+    url: `${apiServerUrl}/server/deleteRole`,
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -176,7 +176,7 @@ export const generateCertificate = async (pubKey, name, ip_address, accessToken)
   formData.append("groups", name);
 
   const config = {
-    url: `${apiServerUrl}/generateCertificate`,
+    url: `${apiServerUrl}/server/generateCertificate`,
     method: "POST",
     headers: {
       "content-type": "multipart/form-data",

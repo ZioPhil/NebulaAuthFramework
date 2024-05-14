@@ -58,7 +58,7 @@ const checkPermissions = jwtAuthz([ "manage:users" ], { customScopeKey: "permiss
 let machines = require('./machines_db')
 
 // get all users
-app.post('/users', checkJwt, checkPermissions, async (req, res) => {
+app.post('/server/users', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received users request")
   const roleId = req.body.role
 
@@ -88,7 +88,7 @@ app.post('/users', checkJwt, checkPermissions, async (req, res) => {
 });
 
 //get all roles
-app.get('/roles', checkJwt, checkPermissions, (req, res) => {
+app.get('/server/roles', checkJwt, checkPermissions, (req, res) => {
   console.log("Received roles request")
 
   managementAPI.roles.getAll()
@@ -108,7 +108,7 @@ app.get('/roles', checkJwt, checkPermissions, (req, res) => {
 });
 
 // update users for role
-app.post('/updateRoleUsers', checkJwt, checkPermissions, (req, res) => {
+app.post('/server/updateRoleUsers', checkJwt, checkPermissions, (req, res) => {
   console.log("Received update role users request")
   const roleId = req.body.roleId
   const userId = req.body.userId
@@ -143,7 +143,7 @@ app.post('/updateRoleUsers', checkJwt, checkPermissions, (req, res) => {
 });
 
 // update machines for role
-app.post('/updateRoleMachines', checkJwt, checkPermissions, async (req, res) => {
+app.post('/server/updateRoleMachines', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received update role machines request")
   const roleId = req.body.roleId
   const machineId = req.body.machineId
@@ -187,7 +187,7 @@ app.post('/updateRoleMachines', checkJwt, checkPermissions, async (req, res) => 
 });
 
 // create new role
-app.post('/createRole', checkJwt, checkPermissions, (req, res) => {
+app.post('/server/createRole', checkJwt, checkPermissions, (req, res) => {
   console.log("Received create role request")
   const roleName = req.body.name
 
@@ -205,7 +205,7 @@ app.post('/createRole', checkJwt, checkPermissions, (req, res) => {
 });
 
 // delete role
-app.post('/deleteRole', checkJwt, checkPermissions, (req, res) => {
+app.post('/server/deleteRole', checkJwt, checkPermissions, (req, res) => {
   console.log("Received delete role request")
 
   if (req.body.roleId !== process.env.VITE_AUTH0_ADMIN_ROLE_ID) {
@@ -225,7 +225,7 @@ app.post('/deleteRole', checkJwt, checkPermissions, (req, res) => {
 });
 
 // get machines available to the user
-app.get('/machinesNormal', checkJwt, async (req, res) => {
+app.get('/server/machinesNormal', checkJwt, async (req, res) => {
   console.log("Received machines request")
 
   if (req.auth.permissions.includes('manage:users')) {
@@ -257,7 +257,7 @@ app.get('/machinesNormal', checkJwt, async (req, res) => {
 });
 
 // get all machines
-app.post('/machinesAdmin', checkJwt, checkPermissions, (req, res) => {
+app.post('/server/machinesAdmin', checkJwt, checkPermissions, (req, res) => {
   console.log("Received machines admin request")
   const roleId = req.body.role
 
@@ -269,7 +269,7 @@ app.post('/machinesAdmin', checkJwt, checkPermissions, (req, res) => {
 });
 
 // generate certificate for a given machine
-app.post('/generateCertificate', checkJwt, async (req, res) => {
+app.post('/server/generateCertificate', checkJwt, async (req, res) => {
   console.log("Received certificate generation request")
   const key = req.body.key
   const name = req.body.name
@@ -336,7 +336,7 @@ app.post('/generateCertificate', checkJwt, async (req, res) => {
   }
 })
 
-app.get('/', (req, res) => {
+app.get('/server/', (req, res) => {
   console.log("Received hello request")
   res.send(`Server listening on port ${port}`)
 });
