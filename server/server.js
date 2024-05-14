@@ -72,7 +72,7 @@ async function startServer(){
 // TODO: add logs
 
 // get all users
-app.post('/users', checkJwt, checkPermissions, async (req, res) => {
+app.post('/server/users', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received users request")
   const groupId = req.body.role
   const counter = req.body.counter
@@ -113,7 +113,7 @@ app.post('/users', checkJwt, checkPermissions, async (req, res) => {
 });
 
 //add new user to database
-app.post('/addUser', checkJwt, async (req, res) => {
+app.post('/server/addUser', checkJwt, async (req, res) => {
   console.log("Received add user request")
   const userId = req.auth.sub
   //check if the user is already in the database, this is done to prevent the exploitation of this call
@@ -140,7 +140,7 @@ app.post('/addUser', checkJwt, async (req, res) => {
 });
 
 //get all roles
-app.post('/roles', checkJwt, checkPermissions, async (req, res) => {
+app.post('/server/roles', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received roles request")
   const counter = req.body.counter;
   const value = req.body.value;
@@ -181,7 +181,7 @@ app.post('/roles', checkJwt, checkPermissions, async (req, res) => {
 });
 
 // update users for role
-app.post('/updateRoleUsers', checkJwt, checkPermissions, async (req, res) => {
+app.post('/server/updateRoleUsers', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received update role users request")
   const roleId = req.body.roleId
   const userId = req.body.userId
@@ -214,7 +214,7 @@ app.post('/updateRoleUsers', checkJwt, checkPermissions, async (req, res) => {
 });
 
 // update machines for role
-app.post('/updateRoleMachines', checkJwt, checkPermissions, async (req, res) => {
+app.post('/server/updateRoleMachines', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received update role machines request")
   const roleId = req.body.roleId
   const machineId = req.body.machineId
@@ -247,7 +247,7 @@ app.post('/updateRoleMachines', checkJwt, checkPermissions, async (req, res) => 
 });
 
 // create new role
-app.post('/createRole', checkJwt, checkPermissions, async (req, res) => {
+app.post('/server/createRole', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received create role request")
   const roleName = req.body.name
   const { id, error } = await callUuidGenerator();
@@ -272,7 +272,7 @@ app.post('/createRole', checkJwt, checkPermissions, async (req, res) => {
 });
 
 // delete role
-app.post('/deleteRole', checkJwt, checkPermissions, async (req, res) => {
+app.post('/server/deleteRole', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received delete role request")
   const roleId = req.body.roleId
   const query1 = "DELETE FROM MachineUserGroups WHERE group_ID=?;"
@@ -292,7 +292,7 @@ app.post('/deleteRole', checkJwt, checkPermissions, async (req, res) => {
 });
 
 // get machines available to the user
-app.post('/machinesNormal', checkJwt, async (req, res) => {
+app.post('/server/machinesNormal', checkJwt, async (req, res) => {
   console.log("Received machines request")
   const counter = req.body.counter;
   const value = req.body.value;
@@ -357,7 +357,7 @@ app.post('/machinesNormal', checkJwt, async (req, res) => {
 });
 
 // get all machines
-app.post('/machinesAdmin', checkJwt, checkPermissions, async (req, res) => {
+app.post('/server/machinesAdmin', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received machines admin request")
   const groupId = req.body.role
   const counter = req.body.counter
@@ -397,7 +397,7 @@ app.post('/machinesAdmin', checkJwt, checkPermissions, async (req, res) => {
 });
 
 // generate certificate for a given machine
-app.post('/generateCertificate', checkJwt, async (req, res) => {
+app.post('/server/generateCertificate', checkJwt, async (req, res) => {
   console.log("Received certificate generation request")
   const key = req.body.key
   const id = req.body.id
@@ -451,7 +451,7 @@ app.post('/generateCertificate', checkJwt, async (req, res) => {
   }
 })
 
-app.get('/', (req, res) => {
+app.get('/server/', (req, res) => {
   console.log("Received hello request")
   res.send(`Server listening on port ${port}`)
 });
