@@ -158,7 +158,10 @@ app.post('/server/updateRoleMachines', checkJwt, checkPermissions, async (req, r
           machines[i].roles.push(roleId)
 
           await FileSystem.writeFile('machines_db.json', JSON.stringify(machines), (error) => {
-            if (error) res.status(500).send("Error while saving machines configuration");
+            if (error) {
+              console.log(error)
+              res.status(500).send("Error while saving machines configuration");
+            }
           });
 
           res.send(true)
@@ -172,7 +175,10 @@ app.post('/server/updateRoleMachines', checkJwt, checkPermissions, async (req, r
           machines[i].roles.splice(machines[i].roles.indexOf(roleId), 1);
 
           await FileSystem.writeFile('machines_db.json', JSON.stringify(machines), (error) => {
-            if (error) res.status(500).send("Error while saving machines configuration");
+            if (error) {
+              console.log(error)
+              res.status(500).send("Error while saving machines configuration");
+            }
           });
 
           res.send(true)
@@ -328,6 +334,7 @@ app.post('/server/generateCertificate', checkJwt, async (req, res) => {
       res.send(data)
     }
     if (error) {
+      console.log(error)
       res.status(500).send(error.message)
     }
   }
