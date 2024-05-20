@@ -176,6 +176,7 @@ app.post('/server/roles', checkJwt, checkPermissions, async (req, res) => {
     }
   }
   if (error) {
+    console.log(error)
     res.status(500).send("Error while generating uuid for role")
   }
 });
@@ -447,6 +448,7 @@ app.post('/server/generateCertificate', checkJwt, async (req, res) => {
     return
   }
   if (error) {
+    console.log(error)
     res.status(500).send("Error while generating certificate")
   }
 })
