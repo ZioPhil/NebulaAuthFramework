@@ -25,8 +25,8 @@ export const callExternalApi = async (options) => {
         message = axiosError.message;
       }
 
-      if (response && response.data && response.data.message) {
-        message = response.data.message;
+      if (response && response.data) {
+        message = response.data;
       }
 
       return {
