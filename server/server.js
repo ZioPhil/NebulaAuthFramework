@@ -335,7 +335,7 @@ app.post('/server/generateCertificate', checkJwt, async (req, res) => {
     }
     if (error) {
       console.log(error)
-      res.status(500).send(error.message)
+      res.status(500).send(error)
     }
   }
   else {
