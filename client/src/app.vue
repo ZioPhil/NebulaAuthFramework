@@ -8,7 +8,7 @@
 
 <script setup>
 import PageLoader from "@/components/page-loader.vue";
-import { useAuth0 } from "auth0";
+import { useAuth0 } from "@auth0/auth0-vue";
 
 const { isLoading } = useAuth0();
 </script>

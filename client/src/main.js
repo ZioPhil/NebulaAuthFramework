@@ -1,4 +1,4 @@
-import { createAuth0 } from "auth0";
+import { createAuth0 } from "@auth0/auth0-vue";
 import { createApp } from "vue";
 import App from "./app.vue";
 import "./assets/css/styles.css";
@@ -16,7 +16,7 @@ app
       authorizationParams: {
         redirect_uri: import.meta.env.VITE_AUTH0_CALLBACK_URL,
         audience: import.meta.env.VITE_AUTH0_AUDIENCE,
-        scope: "openid profile email manage:users read:machines",
+        scope: "manage:users read:machines",
       },
     })
   )
