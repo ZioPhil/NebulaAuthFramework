@@ -283,18 +283,22 @@ app.post('/server/generateCertificate', checkJwt, async (req, res) => {
   const groups = req.body.groups
   let found = false
 
+  console.log("check1")
   // check if the user can access the machine
   let roleIdList = []
   await managementAPI.users.getRoles({ id: req.auth.sub })
     .then(async function(roles) {
+      console.log("check2")
       for (let i = 0; i < roles.data.length; i++) {
         roleIdList.push(roles.data[i].id)
       }
-
+      
+      console.log("check3")
       if (roleIdList.includes(process.env.VITE_AUTH0_ADMIN_ROLE_ID)) {
         found = true // the user is an admin
       }
       else {
+        console.log("check4")
         for (let i = 0; i < machines.length; i++) {
           if (machines[i].name === name) {
             for (let j = 0; j < machines[i].roles.length; j++) {
@@ -313,6 +317,7 @@ app.post('/server/generateCertificate', checkJwt, async (req, res) => {
     });
 
   if (found) {
+    console.log("check5")
     const formData = new FormData();
     formData.append("key", key);
     formData.append("name", name);
@@ -328,12 +333,15 @@ app.post('/server/generateCertificate', checkJwt, async (req, res) => {
       data: formData,
     };
 
+    console.log("check6")
     const { data, error } = await callExternalApi({ config });
 
     if (data) {
+      console.log("check7")
       res.send(data)
     }
     if (error) {
+      console.log("check8")
       console.log(error)
       res.status(500).send(error)
     }
