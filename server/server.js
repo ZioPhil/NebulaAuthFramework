@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const fs = require('fs')
+const https = require ('https')
 const fileupload = require("express-fileupload");
 const callExternalApi = require("./external-api.service")
 const FileSystem = require("fs");
@@ -56,6 +58,9 @@ const checkPermissions = jwtAuthz([ "manage:users" ], { customScopeKey: "permiss
 // TODO: add logs
 // TODO: temporary custom data, implement nebula network connection
 let machines = require('./machines_db')
+
+const ca = fs.readFileSync("cert.pem")
+const httpsAgent = new https.Agent({ca: ca,});
 
 // get all users
 app.post('/server/users', checkJwt, checkPermissions, async (req, res) => {
@@ -282,23 +287,19 @@ app.post('/server/generateCertificate', checkJwt, async (req, res) => {
   const ip_address = req.body.ip_address
   const groups = req.body.groups
   let found = false
-
-  console.log("check1")
+  
   // check if the user can access the machine
   let roleIdList = []
   await managementAPI.users.getRoles({ id: req.auth.sub })
     .then(async function(roles) {
-      console.log("check2")
       for (let i = 0; i < roles.data.length; i++) {
         roleIdList.push(roles.data[i].id)
       }
       
-      console.log("check3")
       if (roleIdList.includes(process.env.VITE_AUTH0_ADMIN_ROLE_ID)) {
         found = true // the user is an admin
       }
       else {
-        console.log("check4")
         for (let i = 0; i < machines.length; i++) {
           if (machines[i].name === name) {
             for (let j = 0; j < machines[i].roles.length; j++) {
@@ -317,7 +318,6 @@ app.post('/server/generateCertificate', checkJwt, async (req, res) => {
     });
 
   if (found) {
-    console.log("check5")
     const formData = new FormData();
     formData.append("key", key);
     formData.append("name", name);
@@ -331,17 +331,15 @@ app.post('/server/generateCertificate', checkJwt, async (req, res) => {
         "content-type": "multipart/form-data",
       },
       data: formData,
+      httpsAgent: httpsAgent,
     };
 
-    console.log("check6")
     const { data, error } = await callExternalApi({ config });
 
     if (data) {
-      console.log("check7")
       res.send(data)
     }
     if (error) {
-      console.log("check8")
       console.log(error)
       res.status(500).send(error)
     }
