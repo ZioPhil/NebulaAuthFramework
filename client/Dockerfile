@@ -18,6 +18,8 @@ RUN npm run build
 
 FROM nginx:stable-alpine as production-stage
 
+COPY nginx.conf /etc/nginx/nginx.conf
+
 COPY --from=build-stage /app/client/dist /usr/share/nginx/html
 
 # Expose the port the client will run on
