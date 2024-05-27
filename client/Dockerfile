@@ -20,4 +20,4 @@ RUN npm run build
 EXPOSE 4040
 
 # Command to start the client in development mode
-CMD rm -rf node_modules/.vite && npm run dev
+CMD ["npm", "run", "dev"]
