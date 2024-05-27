@@ -1,6 +1,8 @@
 # Use a lightweight Node.js image
 FROM node:21-alpine
 
+RUN npm install -g http-server
+
 # Set working directory
 WORKDIR /app/client
 
@@ -20,4 +22,4 @@ RUN npm run build
 EXPOSE 4040
 
 # Command to start the client in development mode
-CMD ["npm", "run", "dev"]
+CMD ["http-server", "dist", "-p 4040"]
