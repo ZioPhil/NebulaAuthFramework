@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const fs = require('fs')
+const https = require ('https')
 const fileupload = require("express-fileupload");
 const callExternalApi = require("./external-api.service")
 const callUuidGenerator = require("./uuid-generation")
@@ -54,6 +56,10 @@ const checkJwt = jwt({
 
 // Admin permission validation
 const checkPermissions = jwtAuthz([ "manage:users" ], { customScopeKey: "permissions", customUserKey: 'auth' });
+
+// Create https agent to connect to python api
+const ca = fs.readFileSync("cert.pem")
+const httpsAgent = new https.Agent({ca: ca,});
 
 // Connect to DB and start server
 async function startServer(){
@@ -439,6 +445,7 @@ app.post('/server/generateCertificate', checkJwt, async (req, res) => {
       "content-type": "multipart/form-data",
     },
     data: formData,
+    httpsAgent: httpsAgent,
   };
 
   const { data, error } = await callExternalApi({ config });
