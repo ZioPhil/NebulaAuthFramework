@@ -1,5 +1,7 @@
 # Use a lightweight Node.js image
-FROM node:21-alpine as build-stage
+FROM node:21-alpine
+
+RUN npm install -g http-server
 
 # Set working directory
 WORKDIR /app/client
@@ -16,14 +18,8 @@ COPY ./client .
 # Build the client app
 RUN npm run build
 
-FROM nginx:stable-alpine as production-stage
-
-COPY --from=build-stage /app/client/nginx.conf /etc/nginx/nginx.conf
-
-COPY --from=build-stage /app/client/dist /usr/share/nginx/html
-
 # Expose the port the client will run on
 EXPOSE 4040
 
 # Command to start the client in development mode
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["http-server", "dist", "-p 4040"]
