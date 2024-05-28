@@ -1,6 +1,21 @@
 # Use a lightweight Node.js image
 FROM node:21-alpine
 
+# Accept build-time enviroment variables
+ARG VITE_API_SERVER_URL
+ARG VITE_AUTH0_DOMAIN
+ARG VITE_AUTH0_CLIENT_ID
+ARG VITE_AUTH0_CALLBACK_URL
+ARG VITE_AUTH0_AUDIENCE
+
+# Set the enviroment variables
+ENV VITE_API_SERVER_URL=${VITE_API_SERVER_URL}
+ENV VITE_AUTH0_DOMAIN=${VITE_AUTH0_DOMAIN}
+ENV VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID}
+ENV VITE_AUTH0_CALLBACK_URL=${VITE_AUTH0_CALLBACK_URL}
+ENV VITE_AUTH0_AUDIENCE=${VITE_AUTH0_AUDIENCE}
+
+# Install http-server to deploy production version of the app
 RUN npm install -g http-server
 
 # Set working directory
