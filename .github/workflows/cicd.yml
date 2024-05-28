@@ -24,7 +24,13 @@ jobs:
 
       - name: Build and push API client Docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/client_db:latest -f ./client/Dockerfile .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/client_db:latest \
+            --build-arg VITE_API_SERVER_URL=${{ secrets.VITE_API_SERVER_URL }} \
+            --build-arg VITE_AUTH0_DOMAIN=${{ secrets.VITE_AUTH0_DOMAIN }} \
+            --build-arg VITE_AUTH0_CLIENT_ID=${{ secrets.VITE_AUTH0_CLIENT_ID }} \
+            --build-arg VITE_AUTH0_CALLBACK_URL=${{ secrets.VITE_AUTH0_CALLBACK_URL }} \
+            --build-arg VITE_AUTH0_AUDIENCE=${{ secrets.VITE_AUTH0_AUDIENCE }} \
+            -f ./client/Dockerfile .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/client_db:latest
 
       - name: Build and push API server Docker image
