@@ -15,8 +15,8 @@ ENV VITE_AUTH0_CLIENT_ID=${VITE_AUTH0_CLIENT_ID}
 ENV VITE_AUTH0_CALLBACK_URL=${VITE_AUTH0_CALLBACK_URL}
 ENV VITE_AUTH0_AUDIENCE=${VITE_AUTH0_AUDIENCE}
 
-# Install http-server to deploy production version of the app
-RUN npm install -g http-server
+# Install serve to deploy production version of the app
+RUN npm install -g serve
 
 # Set working directory
 WORKDIR /app/client
@@ -36,5 +36,5 @@ RUN npm run build
 # Expose the port the client will run on
 EXPOSE 4040
 
-# Command to start the client in development mode
+# Command to start the client in production mode
 CMD ["serve", "-s dist", "-p 4040"]
