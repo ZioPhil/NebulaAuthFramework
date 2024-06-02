@@ -62,6 +62,11 @@ let machines = require('./machines_db')
 const ca = fs.readFileSync("cert.pem")
 const httpsAgent = new https.Agent({ca: ca,});
 
+const options = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
+
 // get all users
 app.post('/server/users', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received users request")
@@ -354,4 +359,4 @@ app.get('/server/', (req, res) => {
   res.send(`Server listening on port ${port}`)
 });
 
-app.listen(port);
+https.createServer(options, app).listen(port);
