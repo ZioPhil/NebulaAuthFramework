@@ -19,7 +19,7 @@ const port = 8000;
 const nebulaApiServerUrl = process.env.VITE_NEBULA_API_ADDRESS;
 
 app.use(bodyParser.json());
-app.use(cors());
+app.use(cors({origin: 'https://srsproject.top'}));
 app.use(express.urlencoded({ extended: true }));
 app.use(fileupload());
 
