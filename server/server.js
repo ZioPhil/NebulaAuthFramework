@@ -30,7 +30,7 @@ app.use(limiter); // apply limiter to all requests
 
 app.use(bodyParser.json());
 app.use(cors());
-app.set('trust proxy', true)
+app.set('trust proxy', 1);
 app.use(express.urlencoded({ extended: true }));
 app.use(fileupload());
 
@@ -463,9 +463,10 @@ app.post('/server/generateCertificate', checkJwt, async (req, res) => {
 
 app.get('/server/', (req, res) => {
   console.log("Received hello request")
-  const xForwardedFor = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  res.send('X-Forwarded-For header:' + xForwardedFor)
-  //res.send(`Server listening on port ${port}`)
+  // determine the number of proxies between client and server
+  //const xForwardedFor = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  //res.send('X-Forwarded-For header:' + xForwardedFor)
+  res.send(`Server listening on port ${port}`)
 });
 
 startServer();
