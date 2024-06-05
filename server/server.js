@@ -463,7 +463,9 @@ app.post('/server/generateCertificate', checkJwt, async (req, res) => {
 
 app.get('/server/', (req, res) => {
   console.log("Received hello request")
-  res.send(`Server listening on port ${port}`)
+  const xForwardedFor = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  res.send('X-Forwarded-For header:' + xForwardedFor)
+  //res.send(`Server listening on port ${port}`)
 });
 
 startServer();
