@@ -62,6 +62,12 @@ const checkPermissions = jwtAuthz([ "manage:users" ], { customScopeKey: "permiss
 const ca = fs.readFileSync("cert.pem")
 const httpsAgent = new https.Agent({ca: ca,});
 
+// load server certificate
+const options = {
+  key: fs.readFileSync('key.pem'),
+  cert: fs.readFileSync('cert.pem')
+};
+
 // Connect to DB and start server
 async function startServer(){
   connection = await mysql.createConnection({
@@ -72,7 +78,7 @@ async function startServer(){
     port: process.env.VITE_DB_PORT,
   });
   console.log("Connected to MySQL database")
-  app.listen(port)
+  https.createServer(options, app).listen(port);
   console.log("Server listening on port " + port)
 }
 
