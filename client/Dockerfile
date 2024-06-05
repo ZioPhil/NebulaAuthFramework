@@ -37,4 +37,4 @@ RUN npm run build
 EXPOSE 4040
 
 # Command to start the client in production mode
-CMD ["serve", "-s", "dist", "-p", "4040"]
+CMD ["serve", "-s", "dist", "-p", "4040", "-S", "-C", "cert.pem", "-K", "key.pem"]
