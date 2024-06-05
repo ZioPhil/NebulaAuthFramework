@@ -30,6 +30,7 @@ app.use(limiter); // apply limiter to all requests
 
 app.use(bodyParser.json());
 app.use(cors());
+app.set('trust proxy', true)
 app.use(express.urlencoded({ extended: true }));
 app.use(fileupload());
 
