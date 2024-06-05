@@ -29,7 +29,7 @@ const limiter = rateLimit({
 app.use(limiter); // apply limiter to all requests
 
 app.use(bodyParser.json());
-app.use(cors());
+app.use(cors({origin: 'https://srsproject.top'}));
 app.set('trust proxy', 1);
 app.use(express.urlencoded({ extended: true }));
 app.use(fileupload());
