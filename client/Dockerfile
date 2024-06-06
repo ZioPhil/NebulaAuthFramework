@@ -35,6 +35,9 @@ COPY ./client .
 # Build the client app
 RUN npm run build
 
+RUN echo "$CLIENT_SSL_CERT"
+RUN echo "$CLIENT_SSL_KEY"
+
 # Create SSL key and cert files
 RUN echo "$CLIENT_SSL_CERT" | base64 -d > /app/client/cert.pem
 RUN echo "$CLIENT_SSL_KEY" | base64 -d > /app/client.key.pem
