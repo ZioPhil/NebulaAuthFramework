@@ -19,8 +19,9 @@ jobs:
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          login-server: srsproject.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Build and push API client Docker image
         run: |
@@ -33,7 +34,7 @@ jobs:
             --build-arg CLIENT_SSL_CERT=${{ secrets.CLIENT_SSL_CERT }} \
             --build-arg CLIENT_SSL_KEY=${{ secrets.CLIENT_SSL_KEY }} \
             -f ./client/Dockerfile .
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/client_db:latest
+          docker push srsproject.azurecr.io/samples/client
 
       - name: Build and push API server Docker image
         run: |
@@ -41,4 +42,4 @@ jobs:
           --build-arg SERVER_SSL_CERT=${{ secrets.SERVER_SSL_CERT }} \
           --build-arg SERVER_SSL_KEY=${{ secrets.SERVER_SSL_KEY }} \
           -f ./server/Dockerfile .
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/server_db:latest
+          docker push srsproject.azurecr.io/samples/server
