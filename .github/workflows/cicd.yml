@@ -32,12 +32,13 @@ jobs:
             --build-arg VITE_AUTH0_AUDIENCE=${{ secrets.VITE_AUTH0_AUDIENCE }} \
             --build-arg CLIENT_SSL_CERT=${{ secrets.CLIENT_SSL_CERT }} \
             --build-arg CLIENT_SSL_KEY=${{ secrets.CLIENT_SSL_KEY }} \
-            --build-arg SERVER_SSL_CERT=${{ secrets.SERVER_SSL_CERT }} \
-            --build-arg SERVER_SSL_KEY=${{ secrets.SERVER_SSL_KEY }} \
             -f ./client/Dockerfile .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/client_db:latest
 
       - name: Build and push API server Docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/server_db:latest -f ./server/Dockerfile .
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/server_db:latest \
+          --build-arg SERVER_SSL_CERT=${{ secrets.SERVER_SSL_CERT }} \
+          --build-arg SERVER_SSL_KEY=${{ secrets.SERVER_SSL_KEY }} \
+          -f ./server/Dockerfile .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/server_db:latest
