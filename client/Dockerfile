@@ -36,8 +36,8 @@ COPY ./client .
 RUN npm run build
 
 # Create SSL key and cert files
-RUN echo "$CLIENT_SSL_CERT" > /app/client/cert.pem
-RUN echo "$CLIENT_SSL_KEY" > /app/client.key.pem
+RUN echo "$CLIENT_SSL_CERT" | base64 -d > /app/client/cert.pem
+RUN echo "$CLIENT_SSL_KEY" | base64 -d > /app/client.key.pem
 
 # Expose the port the client will run on
 EXPOSE 4040
