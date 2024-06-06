@@ -7,6 +7,8 @@ ARG VITE_AUTH0_DOMAIN
 ARG VITE_AUTH0_CLIENT_ID
 ARG VITE_AUTH0_CALLBACK_URL
 ARG VITE_AUTH0_AUDIENCE
+ARG CLIENT_SSL_CERT
+ARG CLIENT_SSL_KEY
 
 # Set the enviroment variables
 ENV VITE_API_SERVER_URL=${VITE_API_SERVER_URL}
@@ -33,8 +35,12 @@ COPY ./client .
 # Build the client app
 RUN npm run build
 
+# Create SSL key and cert files
+RUN echo "$CLIENT_SSL_CERT" > /app/client/cert.pem
+RUN echo "$CLIENT_SSL_KEY" > /app/client.key.pem
+
 # Expose the port the client will run on
 EXPOSE 4040
 
 # Command to start the client in production mode
-CMD ["serve", "-s", "dist", "-p", "4040", "--ssl-cert", "cert.pem", "--ssl-key", "key.pem"]
+CMD ["serve", "-s", "dist", "-p", "4040", "--ssl-cert", "/app/client/cert.pem", "--ssl-key", "/app/client/key.pem"]
