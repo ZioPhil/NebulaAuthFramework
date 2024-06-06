@@ -16,7 +16,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Login to Docker Hub
+      - name: Login to Azure Container Registry
         uses: docker/login-action@v3
         with:
           registry: srsproject.azurecr.io
@@ -25,7 +25,7 @@ jobs:
 
       - name: Build and push API client Docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/client_db:latest \
+          docker build -t srsproject.azurecr.io/samples/client:latest \
             --build-arg VITE_API_SERVER_URL=${{ secrets.VITE_API_SERVER_URL }} \
             --build-arg VITE_AUTH0_DOMAIN=${{ secrets.VITE_AUTH0_DOMAIN }} \
             --build-arg VITE_AUTH0_CLIENT_ID=${{ secrets.VITE_AUTH0_CLIENT_ID }} \
@@ -34,12 +34,12 @@ jobs:
             --build-arg CLIENT_SSL_CERT=${{ secrets.CLIENT_SSL_CERT }} \
             --build-arg CLIENT_SSL_KEY=${{ secrets.CLIENT_SSL_KEY }} \
             -f ./client/Dockerfile .
-          docker push srsproject.azurecr.io/samples/client
+          docker push srsproject.azurecr.io/samples/client:latest
 
       - name: Build and push API server Docker image
         run: |
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/server_db:latest \
+          docker build -t srsproject.azurecr.io/samples/server:latest \
           --build-arg SERVER_SSL_CERT=${{ secrets.SERVER_SSL_CERT }} \
           --build-arg SERVER_SSL_KEY=${{ secrets.SERVER_SSL_KEY }} \
           -f ./server/Dockerfile .
-          docker push srsproject.azurecr.io/samples/server
+          docker push srsproject.azurecr.io/samples/server:latest
