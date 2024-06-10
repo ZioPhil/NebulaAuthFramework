@@ -157,40 +157,33 @@ app.post('/server/roles', checkJwt, checkPermissions, async (req, res) => {
   console.log("Received roles request")
   const counter = req.body.counter;
   const value = req.body.value;
-  const { id, error } = await callUuidGenerator();
-  if (id) {
-    let query = "SELECT * FROM UserGroups"
-    let inserts = [] // using placeholder to prevent SQL Injection attack
+  let query = "SELECT * FROM UserGroups"
+  let inserts = [] // using placeholder to prevent SQL Injection attack
 
-    if (value !== "") {
-      query += (" WHERE Name LIKE ?")
-      inserts.push(value+"%")
-    }
-    query += (" ORDER BY Name LIMIT 50 OFFSET ?;")
-    inserts.push(counter)
-
-    try {
-      const [results] = await connection.query(query, inserts);
-      if (results.length === 0 && counter !== 0) {
-        res.status(404).send("No more roles")
-        return
-      }
-      else if (results.length === 0 && counter === 0 && value !== "") {
-        res.status(404).send("No roles with that name")
-        return
-      }
-
-      res.send(results)
-      return
-    } catch (err) {
-      console.log(err);
-      res.status(500).send("Error while adding role to DB on server")
-      return
-    }
+  if (value !== "") {
+    query += (" WHERE Name LIKE ?")
+    inserts.push(value+"%")
   }
-  if (error) {
-    console.log(error)
-    res.status(500).send("Error while generating uuid for role")
+  query += (" ORDER BY Name LIMIT 50 OFFSET ?;")
+  inserts.push(counter)
+
+  try {
+    const [results] = await connection.query(query, inserts);
+    if (results.length === 0 && counter !== 0) {
+      res.status(404).send("No more roles")
+      return
+    }
+    else if (results.length === 0 && counter === 0 && value !== "") {
+      res.status(404).send("No roles with that name")
+      return
+    }
+
+    res.send(results)
+    return
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Error while adding role to DB on server")
+    return
   }
 });
 
