@@ -27,7 +27,7 @@ const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   max: 100, // max 100 requests per windowMs
 });
-//app.use(limiter); // apply limiter to all requests
+app.use(limiter); // apply limiter to all requests
 app.use(compression()); // makes the server faster
 
 app.use(bodyParser.json());
@@ -46,7 +46,7 @@ const authConfig = {
 const checkJwt = jwt({
   secret: jwksRsa.expressJwtSecret({
     cache: true,
-    rateLimit: false,
+    rateLimit: true,
     jwksRequestsPerMinute: 5,
     jwksUri: `https://${authConfig.domain}/.well-known/jwks.json`
   }),
