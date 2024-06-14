@@ -14,6 +14,7 @@ const express = require('express');
 const rateLimit = require('express-rate-limit');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const compression = require('compression');
 const app = express();
 const port = 8000;
 let connection;
@@ -26,7 +27,8 @@ const limiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
   max: 100, // max 100 requests per windowMs
 });
-app.use(limiter); // apply limiter to all requests
+//app.use(limiter); // apply limiter to all requests
+app.use(compression()); // makes the server faster
 
 app.use(bodyParser.json());
 app.use(cors({origin: 'https://srsproject.top'}));
@@ -44,7 +46,7 @@ const authConfig = {
 const checkJwt = jwt({
   secret: jwksRsa.expressJwtSecret({
     cache: true,
-    rateLimit: true,
+    rateLimit: false,
     jwksRequestsPerMinute: 5,
     jwksUri: `https://${authConfig.domain}/.well-known/jwks.json`
   }),
@@ -467,5 +469,10 @@ app.get('/server/', (req, res) => {
   //res.send('X-Forwarded-For header:' + xForwardedFor)
   res.send(`Server listening on port ${port}`)
 });
+
+process.on('exit', () => {
+  console.log("The server is shutting down");
+  connection.end()
+})
 
 startServer();
